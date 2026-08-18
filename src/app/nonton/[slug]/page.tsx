@@ -2,11 +2,19 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import EpisodeGrid from "@/components/EpisodeGrid";
-import { supabase } from "@/lib/supabase";
+import { getCachedContentBySlug, getCachedContentSlugs } from "@/lib/data";
 import { formatRating } from "@/lib/utils";
+
+// ISR fallback untuk production CDN
+export const revalidate = 3600;
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+// Helper: pakai cached fetcher, bukan query langsung ke Supabase
+async function getContent(slug: string) {
+  return getCachedContentBySlug(slug);
 }
 
 // ============================================================
@@ -14,8 +22,8 @@ interface Props {
 // ============================================================
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-
-  const { data: content } = await supabase.from("contents").select("*").eq("slug", slug).single();
+  // Gunakan Next.js fetch dedupe — query sama tidak akan di-fire ulang dalam satu render
+  const content = await getContent(slug);
 
   if (!content) {
     return { title: "Konten Tidak Ditemukan" };
@@ -45,18 +53,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateStaticParams() {
-  const { data: contents } = await supabase.from("contents").select("slug");
-  return (contents || []).map((c) => ({ slug: c.slug }));
+  const slugs = await getCachedContentSlugs();
+  return slugs.map((c) => ({ slug: c.slug }));
 }
 
 export default async function DetailPage({ params }: Props) {
   const { slug } = await params;
 
-  const { data: content } = await supabase
-    .from("contents")
-    .select("*, genres(*), episodes(*)")
-    .eq("slug", slug)
-    .single();
+  const content = await getContent(slug);
 
   if (!content) notFound();
 

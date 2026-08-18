@@ -2,27 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import ContentCard from "@/components/ContentCard";
-import { supabase } from "@/lib/supabase";
+import { getCachedAllContents } from "@/lib/data";
+
+// ISR fallback untuk production CDN
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "FlixVault — Nonton Film & Anime Sub Indo",
 };
 
 export default async function HomePage() {
-  const { data: trending } = await supabase
-    .from("contents")
-    .select("*, genres(*)")
-    .order("rating", { ascending: false })
-    .limit(1);
-
-  const { data: latest } = await supabase
-    .from("contents")
-    .select("*, genres(*)")
-    .order("created_at", { ascending: false })
-    .limit(12);
-
-  const hero = trending?.[0] || null;
-  const LATEST_CONTENTS = latest || [];
+  // Gunakan cached fetcher — tidak hit Supabase jika data masih fresh
+  const contents = await getCachedAllContents();
+  const hero = contents[0] || null;
+  const LATEST_CONTENTS = contents;
 
   return (
     <>
@@ -44,9 +37,7 @@ export default async function HomePage() {
                 </span>
               </div>
 
-              <h1>
-                {hero.title}
-              </h1>
+              <h1>{hero.title}</h1>
 
               <p className="desc">{hero.synopsis}</p>
 
@@ -58,12 +49,7 @@ export default async function HomePage() {
                   Nonton Sekarang
                 </Link>
                 <Link href={`/nonton/${hero.slug}`} className="btn ghost">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="9" />
                     <path d="M12 8h.01M11 12h1v5h1" />
                   </svg>
@@ -71,16 +57,17 @@ export default async function HomePage() {
                 </Link>
               </div>
             </div>
-            
+
             <div className="hero-poster">
               {hero.poster_url && (
                 <div className="hero-poster-wrapper">
-                  <Image 
-                    src={hero.poster_url} 
-                    alt={hero.title} 
-                    fill 
-                    sizes="(max-width: 768px) 100vw, 400px" 
-                    style={{ objectFit: 'cover' }} 
+                  <Image
+                    src={hero.poster_url}
+                    alt={hero.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    style={{ objectFit: "cover" }}
+                    priority
                   />
                   <div className="hero-poster-overlay">
                     <span className="hero-poster-label">FLIXVAULT ORIGINAL</span>
@@ -112,12 +99,7 @@ export default async function HomePage() {
             </div>
             <Link href="/semua" className="see-all">
               Lihat Semua
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
             </Link>
@@ -140,12 +122,7 @@ export default async function HomePage() {
             </div>
             <Link href="/anime" className="see-all">
               Lihat Semua
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
             </Link>
@@ -170,12 +147,7 @@ export default async function HomePage() {
             </div>
             <Link href="/drakor" className="see-all">
               Lihat Semua
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
             </Link>
