@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { makeSlug, parseEpisodeUrls } from "@/lib/utils";
+import { updateContentAction } from "@/lib/actions";
 
 export default function EditKontenPage() {
   const params = useParams();
   const router = useRouter();
   const slugParam = params.slug as string;
 
-  const [genresList, setGenresList] = useState<{id: string, name: string}[]>([]);
+  const [genresList, setGenresList] = useState<{ id: string, name: string }[]>([]);
   const [initialId, setInitialId] = useState("");
   const [existingPoster, setExistingPoster] = useState("");
   const [existingBanner, setExistingBanner] = useState("");
@@ -50,7 +51,7 @@ export default function EditKontenPage() {
         .select("*, genres(*), episodes(*)")
         .eq("slug", slugParam)
         .single();
-        
+
       if (data) {
         setForm({
           title: data.title,
@@ -60,8 +61,8 @@ export default function EditKontenPage() {
           rating: (data.rating || "").toString(),
           selectedGenres: data.genres?.map((g: any) => g.id) || [],
           episodeUrl: data.type === "film" ? data.episodes?.[0]?.external_url || "" : "",
-          episodesBulk: data.type === "series" 
-            ? (data.episodes || []).sort((a: any, b: any) => a.episode_number - b.episode_number).map((e: any) => e.external_url).join("\n") 
+          episodesBulk: data.type === "series"
+            ? (data.episodes || []).sort((a: any, b: any) => a.episode_number - b.episode_number).map((e: any) => e.external_url).join("\n")
             : "",
         });
         setSlug(data.slug);
@@ -91,16 +92,16 @@ export default function EditKontenPage() {
     if (!newGenreText.trim()) return;
     setAddingGenre(true);
     const customSlug = makeSlug(newGenreText);
-    
+
     try {
       const { data, error } = await supabase
         .from("genres")
         .insert({ name: newGenreText.trim(), slug: customSlug })
         .select()
         .single();
-        
+
       if (error) throw error;
-      
+
       if (data) {
         setGenresList(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
         setForm(p => ({ ...p, selectedGenres: [...p.selectedGenres, data.id] }));
@@ -116,79 +117,81 @@ export default function EditKontenPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
+    // 1. Validasi Awal
+    if (!initialId) {
+      alert("Error: ID konten tidak ditemukan. Silakan refresh halaman.");
+      return;
+    }
+
+    setLoading(true);
     try {
       let posterUrl = existingPoster;
       let bannerUrl = existingBanner;
 
+      // 2. Upload Poster (Hanya jika ada file baru)
       if (posterFile) {
         const fd = new FormData();
         fd.append("file", posterFile);
         fd.append("folder", "posters");
-        fd.append("filename", `${slug}.${posterFile.name.split(".").pop()}`);
+        fd.append("filename", `${slug}-${Date.now()}.${posterFile.name.split(".").pop()}`);
         const res = await fetch("/api/upload", { method: "POST", body: fd });
+        if (!res.ok) throw new Error("Gagal mengunggah poster baru.");
         const data = await res.json();
         posterUrl = data.url;
       }
 
+      // 3. Upload Banner (Hanya jika ada file baru)
       if (bannerFile) {
         const fd = new FormData();
         fd.append("file", bannerFile);
         fd.append("folder", "banners");
-        fd.append("filename", `${slug}.${bannerFile.name.split(".").pop()}`);
+        fd.append("filename", `${slug}-banner-${Date.now()}.${bannerFile.name.split(".").pop()}`);
         const res = await fetch("/api/upload", { method: "POST", body: fd });
+        if (!res.ok) throw new Error("Gagal mengunggah banner baru.");
         const data = await res.json();
         bannerUrl = data.url;
       }
 
-      // Update contents
-      const { error: contentError } = await supabase
-        .from("contents")
-        .update({
-          title: form.title,
-          slug,
-          type: form.type,
-          synopsis: form.synopsis,
-          year: parseInt(form.year),
-          rating: parseFloat(form.rating) || 0,
-          poster_url: posterUrl || null,
-          banner_url: bannerUrl || null,
-        })
-        .eq("id", initialId);
-        
-      if (contentError) throw contentError;
+      // 4. Persiapkan & Bersihkan Data Episode
+      const rawUrls = form.type === "series"
+        ? parseEpisodeUrls(form.episodesBulk)
+        : form.episodeUrl ? [form.episodeUrl] : [];
 
-      // Update episodes (Delete existing, insert new)
-      await supabase.from("episodes").delete().eq("content_id", initialId);
-      const episodeUrls =
-        form.type === "series"
-          ? parseEpisodeUrls(form.episodesBulk)
-          : form.episodeUrl ? [form.episodeUrl] : [];
+      // Filter baris kosong agar tidak merusak database
+      const episodesPayload = rawUrls
+        .filter((url) => url.trim() !== "")
+        .map((url, i) => ({
+          episode_number: i + 1,
+          external_url: url.trim(),
+        }));
 
-      if (episodeUrls.length > 0) {
-        const episodes = episodeUrls.map((url, i) => ({ 
-          content_id: initialId, 
-          episode_number: i+1, 
-          external_url: url 
-        }));
-        await supabase.from("episodes").insert(episodes);
-      }
-      
-      // Update genres (Delete existing, insert new)
-      await supabase.from("content_genres").delete().eq("content_id", initialId);
-      if (form.selectedGenres.length > 0) {
-        const contentGenres = form.selectedGenres.map(gId => ({
-          content_id: initialId,
-          genre_id: gId
-        }));
-        await supabase.from("content_genres").insert(contentGenres);
+      // 5. PANGGIL SERVER ACTION & TANGKAP HASILNYA
+      const result = await updateContentAction(initialId, {
+        title: form.title,
+        slug: slug,
+        type: form.type,
+        synopsis: form.synopsis,
+        year: parseInt(form.year) || new Date().getFullYear(),
+        rating: parseFloat(form.rating) || 0,
+        poster_url: posterUrl,
+        banner_url: bannerUrl,
+        episodes: episodesPayload,
+        genres: form.selectedGenres
+      });
+
+      // 6. CEK APAKAH SERVER ACTION BERHASIL
+      if (result && result.success) {
+        setSuccess(true);
+        window.scrollTo(0, 0);
+      } else {
+        // Jika server action mengirim success: false
+        throw new Error(result?.error || "Terjadi kesalahan saat menyimpan ke database.");
       }
 
-      setSuccess(true);
-    } catch (err) {
-      console.error(err);
-      alert("Gagal menyimpan perubahan!");
+    } catch (err: any) {
+      console.error("Submit Error:", err);
+      alert(err.message || "Gagal menyimpan perubahan!");
     } finally {
       setLoading(false);
     }
@@ -387,7 +390,7 @@ export default function EditKontenPage() {
                     </button>
                   ))}
                 </div>
-                
+
                 {/* Input Custom Genre */}
                 <div style={{ marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px dashed var(--border)", display: "flex", gap: "0.5rem" }}>
                   <input
@@ -430,7 +433,7 @@ export default function EditKontenPage() {
                   <label className="form-label" htmlFor="input-poster">Poster Baru (JPG/PNG, rasio 2:3)</label>
                   {existingPoster && (
                     <div style={{ marginBottom: "0.5rem", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      Gambar saat ini: <a href={existingPoster} target="_blank" rel="noreferrer" style={{color: "var(--admin-accent)"}}>Lihat Poster</a>
+                      Gambar saat ini: <a href={existingPoster} target="_blank" rel="noreferrer" style={{ color: "var(--admin-accent)" }}>Lihat Poster</a>
                     </div>
                   )}
                   <input
@@ -447,7 +450,7 @@ export default function EditKontenPage() {
                   <label className="form-label" htmlFor="input-banner">Banner Baru (rasio 16:9)</label>
                   {existingBanner && (
                     <div style={{ marginBottom: "0.5rem", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      Gambar saat ini: <a href={existingBanner} target="_blank" rel="noreferrer" style={{color: "var(--admin-accent)"}}>Lihat Banner</a>
+                      Gambar saat ini: <a href={existingBanner} target="_blank" rel="noreferrer" style={{ color: "var(--admin-accent)" }}>Lihat Banner</a>
                     </div>
                   )}
                   <input
