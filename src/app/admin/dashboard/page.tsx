@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ShareModal from "@/components/ShareModal";
 import { supabase } from "@/lib/supabase";
 import { Content, ShareData } from "@/lib/types";
+import { bulkInjectAction, bulkDeleteAction } from "@/lib/actions";
 
 const SIDEBAR_LINKS = [
   { href: "/admin/dashboard", label: "📋 Daftar Konten", id: "nav-list" },
@@ -18,16 +19,24 @@ const SIDEBAR_LINKS = [
 export default function AdminDashboardPage() {
   const [contents, setContents] = useState<Content[]>([]);
   const [shareTarget, setShareTarget] = useState<ShareData | null>(null);
+  const [isInjecting, setIsInjecting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadContents = async () => {
+    const { data } = await supabase
+      .from("contents")
+      .select("*, episodes(id)")
+      .order("created_at", { ascending: false });
+    if (data) {
+      setContents(data as any);
+      setSelectedIds([]);
+    }
+  };
 
   useEffect(() => {
-    async function fetchContents() {
-      const { data } = await supabase
-        .from("contents")
-        .select("*, episodes(id)")
-        .order("created_at", { ascending: false });
-      if (data) setContents(data as any);
-    }
-    fetchContents();
+    loadContents();
   }, []);
 
   const handleShareClick = (content: Content) => {
@@ -50,6 +59,75 @@ export default function AdminDashboardPage() {
     } catch (err) {
       console.error("Gagal menghapus:", err);
       alert("Terjadi kesalahan saat menghapus konten.");
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsInjecting(true);
+      const text = await file.text();
+      const jsonData = JSON.parse(text);
+
+      if (!Array.isArray(jsonData)) {
+        throw new Error("Format JSON tidak valid. Harus berupa Array.");
+      }
+
+      const res = await bulkInjectAction(jsonData);
+      if (res.success) {
+        alert(`Injeksi selesai! Berhasil: ${res.inserted}, Dilewati (sudah ada): ${res.skipped}`);
+        loadContents();
+      } else {
+        alert(`Gagal injeksi data: ${res.error}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(`Terjadi kesalahan: ${err.message}`);
+    } finally {
+      setIsInjecting(false);
+      // Reset input file
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(contents.map(c => c.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds([...selectedIds, id]);
+    } else {
+      setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Yakin ingin menghapus ${selectedIds.length} konten yang dipilih? Data tidak dapat dikembalikan.`)) return;
+
+    try {
+      setIsDeleting(true);
+      const res = await bulkDeleteAction(selectedIds);
+      if (res.success) {
+        alert("Konten terpilih berhasil dihapus.");
+        loadContents();
+      } else {
+        alert(`Gagal menghapus data: ${res.error}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(`Terjadi kesalahan: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -79,11 +157,36 @@ export default function AdminDashboardPage() {
 
       {/* Main */}
       <main className="admin-main">
-        <div className="admin-header">
+        <div className="admin-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h1 className="admin-page-title">📋 Daftar Konten</h1>
-          <Link href="/admin/dashboard/tambah" className="btn btn-admin btn-sm">
-            + Tambah Konten
-          </Link>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            {selectedIds.length > 0 && (
+              <button 
+                className="btn btn-danger btn-sm"
+                onClick={handleBulkDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "⏳ Menghapus..." : `🗑 Hapus Terpilih (${selectedIds.length})`}
+              </button>
+            )}
+            <input 
+              type="file" 
+              accept=".json" 
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleFileUpload}
+            />
+            <button 
+              className="btn btn-ghost btn-sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isInjecting}
+            >
+              {isInjecting ? "⏳ Menginjeksi..." : "⚡ Auto Inject (JSON)"}
+            </button>
+            <Link href="/admin/dashboard/tambah" className="btn btn-admin btn-sm">
+              + Tambah Konten
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -121,6 +224,13 @@ export default function AdminDashboardPage() {
           <table className="data-table">
             <thead>
               <tr>
+                <th style={{ width: "40px", textAlign: "center" }}>
+                  <input 
+                    type="checkbox" 
+                    checked={contents.length > 0 && selectedIds.length === contents.length}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th>Konten</th>
                 <th>Tipe</th>
                 <th>Tahun</th>
@@ -132,6 +242,13 @@ export default function AdminDashboardPage() {
             <tbody>
               {contents.map((content) => (
                 <tr key={content.id}>
+                  <td style={{ textAlign: "center" }}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.includes(content.id)}
+                      onChange={(e) => handleSelectRow(content.id, e.target.checked)}
+                    />
+                  </td>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                       {content.poster_url && (

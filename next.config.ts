@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        // TMDB Images (dari scraper LK21/IDLIX)
+        protocol: "https",
+        hostname: "image.tmdb.org",
+      },
     ],
   },
 };
