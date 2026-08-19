@@ -69,7 +69,7 @@ export default async function HomePage() {
           </div>
           <div className="card-grid">
             {LATEST_CONTENTS.filter((c: any) =>
-              c.genres?.some((g: any) => g.slug === "anime")
+              c.genres?.some((g: any) => g.slug === "anime" || g.slug === "animation")
             ).map((content: any) => (
               <ContentCard key={content.id} content={content} />
             ))}

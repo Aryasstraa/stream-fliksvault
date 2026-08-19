@@ -49,10 +49,13 @@ export const getCachedContentsByGenre = unstable_cache(
 
     if (!genreData) return null;
 
+    // Jika mencari anime, sertakan juga slug "animation" dari scraper
+    const genreSlugs = genre === "anime" ? ["anime", "animation"] : [genre];
+
     const { data } = await supabase
       .from("contents")
       .select("*, genres!inner(*)")
-      .eq("genres.slug", genre)
+      .in("genres.slug", genreSlugs)
       .order("created_at", { ascending: false });
 
     return { contents: data || [], pageTitle: genreData.name };
