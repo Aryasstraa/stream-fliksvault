@@ -101,7 +101,8 @@ export async function bulkInjectAction(data: any[]) {
                 .insert({
                     title: rawTitle,
                     slug: slug,
-                    type: item.type === "series" ? "series" : "film", // <--- AMBIL DARI JSON
+                    type: item.type === "series" ? "series" : "film",
+                    media_format: item.media_format || null,
                     synopsis: item.synopsis || "",
                     year: year,
                     rating: rating,
