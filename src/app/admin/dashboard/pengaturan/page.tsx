@@ -80,43 +80,41 @@ export default function PengaturanPage() {
           <div className="settings-card">
             <div className="settings-card-title">🎯 Konfigurasi Popunder Iklan</div>
             <div className="settings-card-desc">
-              Masukkan URL script iklan Popunder dari penyedia jaringan iklan Anda (contoh: Propeller Ads, PopAds, Hilltop Ads, dll).
-              Setiap kali user mengklik tombol episode, script ini akan dipanggil.
+              Masukkan script HTML mentah iklan Popunder dari penyedia jaringan iklan Anda (contoh: Adsterra, Propeller Ads, dll).
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="popunder-url">
-                URL Script Popunder
+                Script Popunder (Raw HTML)
               </label>
-              <input
+              <textarea
                 id="popunder-url"
-                type="url"
-                className="form-input"
-                placeholder="https://your-ad-network.com/popunder?id=YOUR_ID"
+                className="form-textarea"
+                rows={4}
+                placeholder={`<script src="...">...</script>`}
                 value={popunderUrl}
                 onChange={(e) => setPopunderUrl(e.target.value)}
               />
               <p className="form-hint">
-                URL ini disimpan di tabel <code>settings</code> Supabase.
-                Ubah kapan saja untuk merotasi penyedia iklan tanpa coding ulang.
+                Script ini akan disisipkan di seluruh halaman.
               </p>
             </div>
 
             <div className="form-group" style={{ marginTop: "1.5rem" }}>
               <label className="form-label" htmlFor="native-banner-url">
-                URL Iklan Native Banner
+                Script Iklan Native Banner (Raw HTML)
               </label>
-              <input
+              <textarea
                 id="native-banner-url"
-                type="url"
-                className="form-input"
-                placeholder="https://your-ad-network.com/banner?id=YOUR_ID"
+                className="form-textarea"
+                rows={5}
+                placeholder={`<script src="...">...</script>\n<div id="..."></div>`}
                 value={nativeBannerUrl}
                 onChange={(e) => setNativeBannerUrl(e.target.value)}
               />
               <p className="form-hint">
-                Banner iklan statis yang akan ditampilkan (misalnya di bawah player video). 
-                Isi dengan link iklan jaringan banner Anda.
+                Banner iklan statis yang akan ditampilkan di bawah player video.
+                Isi dengan script (kode HTML mentah) jaringan banner Anda.
               </p>
             </div>
 
@@ -149,7 +147,7 @@ export default function PengaturanPage() {
 
         {/* Info Card */}
         <div className="settings-card">
-          <div className="settings-card-title">ℹ️ Cara Kerja Sistem Monetisasi</div>
+          <div className="settings-card-title">ℹ️ Cara Kerja Sistem Iklan</div>
           <div
             style={{
               color: "var(--text-secondary)",
@@ -157,19 +155,11 @@ export default function PengaturanPage() {
               lineHeight: "1.8",
             }}
           >
-            <ol style={{ paddingLeft: "1.25rem" }}>
-              <li>
-                <strong style={{ color: "var(--text-primary)" }}>User Klik Episode</strong> → JavaScript berjalan secara instan.
-              </li>
-              <li>
-                <strong style={{ color: "var(--text-primary)" }}>Popunder Trigger</strong> → Tab baru terbuka di latar belakang, memuat URL script iklan yang sudah Anda konfigurasi di halaman ini.
-              </li>
-              <li>
-                <strong style={{ color: "var(--text-primary)" }}>Redirect Otomatis</strong> → Tab utama user langsung berpindah ke URL video eksternal (LK21, Anime, dll).
-              </li>
-            </ol>
+            <p>
+              Script yang Anda masukkan akan langsung disisipkan ke dalam kode HTML website menggunakan fungsi khusus yang mengeksekusi JavaScript. Ini sangat cocok untuk iklan <strong>Adsterra, Monetag, PropellerAds</strong>, dan jaringan lain yang mengharuskan pemasangan raw script.
+            </p>
             <p style={{ marginTop: "1rem" }}>
-              💡 <strong style={{ color: "var(--text-primary)" }}>Tips Rotasi:</strong> Ganti URL script di sini kapan saja untuk berpindah penyedia iklan tanpa perlu deploy ulang.
+              💡 <strong style={{ color: "var(--text-primary)" }}>Perhatian:</strong> Pastikan Anda menyalin kode script dengan utuh dan tidak terpotong agar iklan dapat berjalan dengan baik.
             </p>
           </div>
         </div>

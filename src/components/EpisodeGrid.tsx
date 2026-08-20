@@ -14,32 +14,23 @@ export default function EpisodeGrid({
   type,
   contentTitle,
 }: EpisodeGridProps) {
-  const [popunderUrl, setPopunderUrl] = useState<string>("");
-
-  useEffect(() => {
-    // Ambil URL popunder dari API (Settings)
-    fetch("/api/settings?key=popunder_script_url")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.value) setPopunderUrl(data.value);
-      })
-      .catch(() => {});
-  }, []);
+  // Popunder ditangani secara otomatis oleh script Adsterra yang diinjeksi secara global.
 
   const handleClick = (episode: Episode) => {
-    // 1. Trigger Popunder (buka tab baru di background)
-    if (popunderUrl) {
-      const pop = window.open(popunderUrl, "_blank", "noopener,noreferrer");
-      if (pop) {
-        pop.blur();
-        window.focus();
-      }
-    }
-
-    // 2. Redirect tab saat ini ke URL video eksternal
+    // 1. Redirect tab saat ini ke URL video eksternal
+    // Kita berikan delay sedikit (200ms) agar script Adsterra sempat menangkap event click
+    // dan membuka popundernya sebelum halaman ini berpindah.
     setTimeout(() => {
-      window.location.href = episode.external_url;
-    }, 100);
+      let url = episode.external_url;
+      if (!url || url.trim() === "" || url === "N/A" || !url.includes(".")) {
+        alert("Maaf, link nonton belum tersedia.");
+        return;
+      }
+      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "https://" + url;
+      }
+      window.location.href = url;
+    }, 200);
   };
 
   if (type === "film") {

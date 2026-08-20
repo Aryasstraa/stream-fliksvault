@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import EpisodeGrid from "@/components/EpisodeGrid";
+import AdInjector from "@/components/AdInjector";
 import { getCachedContentBySlug, getCachedContentSlugs } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
 import { formatRating } from "@/lib/utils";
 
 // ISR fallback untuk production CDN
@@ -61,11 +63,15 @@ export default async function DetailPage({ params }: Props) {
   const { slug } = await params;
 
   const content = await getContent(slug);
+  const { data: settings } = await supabase.from("settings").select("*");
 
   if (!content) notFound();
 
   const episodes = content.episodes ?? [];
   const genres = content.genres ?? [];
+
+  const popunderScript = settings?.find((s: any) => s.key === "popunder_script_url")?.value ?? "";
+  const nativeBannerScript = settings?.find((s: any) => s.key === "native_banner_url")?.value ?? "";
 
   return (
     <>
@@ -143,6 +149,9 @@ export default async function DetailPage({ params }: Props) {
           </section>
         </div>
       </div>
+
+      {/* Popunder Injection (Global for this page) */}
+      {popunderScript && <AdInjector htmlContent={popunderScript} />}
     </>
   );
 }
