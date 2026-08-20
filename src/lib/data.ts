@@ -21,7 +21,7 @@ export const getCachedAllContents = unstable_cache(
   { revalidate: 300, tags: ["contents"] }
 );
 
-/** Ambil konten berdasarkan genre slug — cache 5 menit per genre */
+/** Ambil konten berdasarkan genre slug atau media_format — cache 5 menit per genre */
 export const getCachedContentsByGenre = unstable_cache(
   async (genre: string) => {
     if (genre === "film") {
@@ -41,7 +41,25 @@ export const getCachedContentsByGenre = unstable_cache(
       return { contents: data || [], pageTitle: "Semua Konten" };
     }
 
-    // Genre spesifik (anime, drakor, drachin, dll)
+    // Media format categories — query langsung via kolom media_format
+    const mediaFormatMap: Record<string, string> = {
+      anime: "Anime",
+      drakor: "Drama Korea",
+      drachin: "Drama China",
+      animasi: "Animasi",
+    };
+
+    if (mediaFormatMap[genre]) {
+      const formatValue = mediaFormatMap[genre];
+      const { data } = await supabase
+        .from("contents")
+        .select("*, genres(*)")
+        .eq("media_format", formatValue)
+        .order("created_at", { ascending: false });
+      return { contents: data || [], pageTitle: formatValue };
+    }
+
+    // Fallback: Genre spesifik lainnya (action, comedy, dll)
     const { data: genreData } = await supabase
       .from("genres")
       .select("*")
@@ -50,13 +68,10 @@ export const getCachedContentsByGenre = unstable_cache(
 
     if (!genreData) return null;
 
-    // Jika mencari anime, sertakan juga slug "animation" dari scraper
-    const genreSlugs = genre === "anime" ? ["anime", "animation"] : [genre];
-
     const { data } = await supabase
       .from("contents")
       .select("*, genres!inner(*)")
-      .in("genres.slug", genreSlugs)
+      .eq("genres.slug", genre)
       .order("created_at", { ascending: false });
 
     return { contents: data || [], pageTitle: genreData.name };

@@ -29,6 +29,7 @@ export default function EditKontenPage() {
   const [form, setForm] = useState({
     title: "",
     type: "film" as "film" | "series",
+    media_format: "",
     synopsis: "",
     year: new Date().getFullYear().toString(),
     rating: "",
@@ -54,6 +55,7 @@ export default function EditKontenPage() {
         setForm({
           title: data.title,
           type: data.type as any,
+          media_format: data.media_format || "",
           synopsis: data.synopsis || "",
           year: (data.year || "").toString(),
           rating: (data.rating || "").toString(),
@@ -113,6 +115,21 @@ export default function EditKontenPage() {
     }
   };
 
+  const handleDeleteGenre = async (id: string, name: string) => {
+    try {
+      const { error } = await supabase.from("genres").delete().eq("id", id);
+      if (error) throw error;
+      setGenresList(prev => prev.filter(g => g.id !== id));
+      setForm(p => ({
+         ...p,
+         selectedGenres: p.selectedGenres.filter(gId => gId !== id)
+      }));
+    } catch (err: any) {
+      console.error(err);
+      alert("Gagal menghapus genre.");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -142,6 +159,7 @@ export default function EditKontenPage() {
         title: form.title,
         slug: slug,
         type: form.type,
+        media_format: form.media_format,
         synopsis: form.synopsis,
         year: parseInt(form.year) || new Date().getFullYear(),
         rating: parseFloat(form.rating) || 0,
@@ -261,6 +279,27 @@ export default function EditKontenPage() {
                   </select>
                 </div>
 
+                <div className="form-group">
+                  <label className="form-label" htmlFor="input-media-format">Format Media (Opsional)</label>
+                  <select
+                    id="input-media-format"
+                    className="form-select"
+                    value={form.media_format}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        media_format: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">-- Pilih Format --</option>
+                    <option value="Drama China">Drama China</option>
+                    <option value="Drama Korea">Drama Korea</option>
+                    <option value="Anime">Anime</option>
+                    <option value="Animasi">Animasi</option>
+                  </select>
+                </div>
+
                 <div
                   style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}
                 >
@@ -322,30 +361,58 @@ export default function EditKontenPage() {
                   }}
                 >
                   {genresList.map((genre) => (
-                    <button
-                      key={genre.id}
-                      type="button"
-                      onClick={() => toggleGenre(genre.id)}
-                      style={{
-                        padding: "0.35rem 0.9rem",
-                        borderRadius: "20px",
-                        fontSize: "0.85rem",
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        border: form.selectedGenres.includes(genre.id)
-                          ? "2px solid var(--admin-accent)"
-                          : "1px solid var(--border)",
-                        background: form.selectedGenres.includes(genre.id)
-                          ? "var(--admin-accent-soft)"
-                          : "var(--bg-base)",
-                        color: form.selectedGenres.includes(genre.id)
-                          ? "var(--admin-accent)"
-                          : "var(--text-secondary)",
-                        transition: "var(--transition-fast)",
-                      }}
-                    >
-                      {genre.name}
-                    </button>
+                    <div key={genre.id} style={{ position: "relative", display: "inline-block" }}>
+                      <button
+                        type="button"
+                        onClick={() => toggleGenre(genre.id)}
+                        style={{
+                          padding: "0.35rem 0.9rem",
+                          borderRadius: "20px",
+                          fontSize: "0.85rem",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                          border: form.selectedGenres.includes(genre.id)
+                            ? "2px solid var(--admin-accent)"
+                            : "1px solid var(--border)",
+                          background: form.selectedGenres.includes(genre.id)
+                            ? "var(--admin-accent-soft)"
+                            : "var(--bg-base)",
+                          color: form.selectedGenres.includes(genre.id)
+                            ? "var(--admin-accent)"
+                            : "var(--text-secondary)",
+                          transition: "var(--transition-fast)",
+                        }}
+                      >
+                        {genre.name}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteGenre(genre.id, genre.name);
+                        }}
+                        title="Hapus Genre"
+                        style={{
+                          position: "absolute",
+                          top: "-4px",
+                          right: "-4px",
+                          background: "#ef4444",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "50%",
+                          width: "16px",
+                          height: "16px",
+                          fontSize: "10px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                        }}
+                      >
+                        x
+                      </button>
+                    </div>
                   ))}
                 </div>
 

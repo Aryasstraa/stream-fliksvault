@@ -16,6 +16,7 @@ export async function updateContentAction(id: string, payload: any) {
                 title: payload.title,
                 slug: payload.slug,
                 type: payload.type,
+                media_format: payload.media_format,
                 synopsis: payload.synopsis,
                 year: payload.year,
                 rating: payload.rating,
