@@ -100,7 +100,7 @@ export async function bulkInjectAction(data: any[]) {
                 .insert({
                     title: rawTitle,
                     slug: slug,
-                    type: "film",
+                    type: item.type === "series" ? "series" : "film", // <--- AMBIL DARI JSON
                     synopsis: item.synopsis || "",
                     year: year,
                     rating: rating,
@@ -152,7 +152,16 @@ export async function bulkInjectAction(data: any[]) {
                 await admin.from("content_genres").insert(contentGenres);
             }
 
-            if (item.source_url && item.source_url !== "N/A") {
+            if (item.type === "series" && Array.isArray(item.episodes) && item.episodes.length > 0) {
+                // Jika formatnya Series (Anime), masukkan SEMUA daftar episode
+                const episodesToInsert = item.episodes.map((ep: any, index: number) => ({
+                    content_id: contentId,
+                    episode_number: index + 1, // Urutan 1, 2, 3...
+                    external_url: ep.source_url,
+                }));
+                await admin.from("episodes").insert(episodesToInsert);
+            } else if (item.source_url && item.source_url !== "N/A") {
+                // Jika formatnya Film, cukup 1 episode saja
                 await admin.from("episodes").insert({
                     content_id: contentId,
                     episode_number: 1,
