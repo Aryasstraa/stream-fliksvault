@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import type { Content } from "@/lib/types";
 import HeroCarousel from "@/components/HeroCarousel";
 import ContentCard from "@/components/ContentCard";
-import { getCachedAllContents } from "@/lib/data";
+import ContentCarousel from "@/components/ContentCarousel";
+import { getCachedAllContents, getCachedContentsByGenre } from "@/lib/data";
 
 // ISR fallback untuk production CDN
 export const revalidate = 300;
@@ -17,6 +18,14 @@ export default async function HomePage() {
   const contents = await getCachedAllContents();
   const LATEST_CONTENTS: Content[] = contents;
   const heroItems = contents.slice(0, 5);
+
+  // Fetch konten berdasarkan genre spesifik untuk carousel
+  const animeData = await getCachedContentsByGenre("anime");
+  const drakorData = await getCachedContentsByGenre("drakor");
+
+  // Batasi maksimal 12 item untuk carousel di home
+  const animeContents = animeData?.contents?.slice(0, 12) || [];
+  const drakorContents = drakorData?.contents?.slice(0, 12) || [];
 
 
   return (
@@ -42,11 +51,7 @@ export default async function HomePage() {
               </svg>
             </Link>
           </div>
-          <div className="card-grid">
-            {LATEST_CONTENTS.map((content) => (
-              <ContentCard key={content.id} content={content} />
-            ))}
-          </div>
+          <ContentCarousel items={LATEST_CONTENTS} />
         </section>
 
         <section className="row-section">
@@ -65,13 +70,7 @@ export default async function HomePage() {
               </svg>
             </Link>
           </div>
-          <div className="card-grid">
-            {LATEST_CONTENTS.filter((c: Content) =>
-              c.genres?.some((g) => g.slug === "anime" || g.slug === "animation")
-            ).map((content: Content) => (
-              <ContentCard key={content.id} content={content} />
-            ))}
-          </div>
+          <ContentCarousel items={animeContents} />
         </section>
 
         <section className="row-section">
@@ -90,13 +89,7 @@ export default async function HomePage() {
               </svg>
             </Link>
           </div>
-          <div className="card-grid">
-            {LATEST_CONTENTS.filter((c: Content) =>
-              c.genres?.some((g) => g.slug === "drakor")
-            ).map((content: Content) => (
-              <ContentCard key={content.id} content={content} />
-            ))}
-          </div>
+          <ContentCarousel items={drakorContents} />
         </section>
       </main>
     </>
