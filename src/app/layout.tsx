@@ -23,14 +23,17 @@ const spaceMono = Space_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "FlixVault — Nonton Film & Anime Sub Indo",
-    template: "%s | FlixVault",
+    default: "MovieTeater - Nonton Film & Series Lengkap",
+    template: "%s | MovieTeater",
   },
   description:
     "Platform streaming film, series, anime, dan drama Korea terlengkap. Nonton gratis dengan kualitas terbaik.",
   openGraph: {
-    siteName: "FlixVault",
+    siteName: "MovieTeater",
     type: "website",
+  },
+  icons: {
+    icon: '/icon1.png',
   },
 };
 
@@ -58,7 +61,7 @@ export default function RootLayout({
                 menikmati cerita yang layak ditonton.
               </p>
               <p style={{ marginTop: "24px", fontSize: "10px" }}>
-                © {new Date().getFullYear()} FlixVault. Khusus tontonan untuk setiap suasana.
+                © {new Date().getFullYear()} MovieTeater. Khusus tontonan untuk setiap suasana.
               </p>
             </div>
             <div className="foot-partners" style={{ display: "flex", gap: "16px", alignItems: "center" }}>

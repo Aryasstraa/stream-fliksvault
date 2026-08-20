@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import type { Content } from "@/lib/types";
 import HeroCarousel from "@/components/HeroCarousel";
 import ContentCard from "@/components/ContentCard";
 import { getCachedAllContents } from "@/lib/data";
@@ -8,16 +9,13 @@ import { getCachedAllContents } from "@/lib/data";
 // ISR fallback untuk production CDN
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "FlixVault — Nonton Film & Anime Sub Indo",
-};
+export const metadata: Metadata = {};
 
 export default async function HomePage() {
   // Gunakan cached fetcher — tidak hit Supabase jika data masih fresh
 
   const contents = await getCachedAllContents();
-  const hero = contents[0] || null;
-  const LATEST_CONTENTS = contents;
+  const LATEST_CONTENTS: Content[] = contents;
   const heroItems = contents.slice(0, 5);
 
 
@@ -68,9 +66,9 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="card-grid">
-            {LATEST_CONTENTS.filter((c: any) =>
-              c.genres?.some((g: any) => g.slug === "anime" || g.slug === "animation")
-            ).map((content: any) => (
+            {LATEST_CONTENTS.filter((c: Content) =>
+              c.genres?.some((g) => g.slug === "anime" || g.slug === "animation")
+            ).map((content: Content) => (
               <ContentCard key={content.id} content={content} />
             ))}
           </div>
@@ -93,9 +91,9 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="card-grid">
-            {LATEST_CONTENTS.filter((c: any) =>
-              c.genres?.some((g: any) => g.slug === "drakor")
-            ).map((content: any) => (
+            {LATEST_CONTENTS.filter((c: Content) =>
+              c.genres?.some((g) => g.slug === "drakor")
+            ).map((content: Content) => (
               <ContentCard key={content.id} content={content} />
             ))}
           </div>

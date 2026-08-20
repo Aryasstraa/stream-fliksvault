@@ -14,10 +14,10 @@ export default function PengaturanPage() {
     async function loadSettings() {
       const { data } = await supabase.from("settings").select("*");
       if (data) {
-        const popunder = data.find(s => s.key === "popunder_script_url");
+        const popunder = data.find((s: any) => s.key === "popunder_script_url");
         if (popunder) setPopunderUrl(popunder.value);
         
-        const nativeBanner = data.find(s => s.key === "native_banner_url");
+        const nativeBanner = data.find((s: any) => s.key === "native_banner_url");
         if (nativeBanner) setNativeBannerUrl(nativeBanner.value);
       }
     }

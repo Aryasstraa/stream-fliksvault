@@ -108,7 +108,7 @@ export default function HeroCarousel({ items }: HeroCarouselProps) {
                             />
                             <div className="hero-poster-overlay">
                                 <span className="hero-poster-label">
-                                    {currentContent.type === "series" ? "ORIGINAL SERIES" : "FLIXVAULT EXCLUSIVE"}
+                                    {currentContent.type === "series" ? "ORIGINAL SERIES" : "MOVIETEATER EXCLUSIVE"}
                                 </span>
                                 <span className="hero-poster-tagline">
                                     {currentContent.rating ? `Rating ${currentContent.rating.toFixed(1)}/10` : "Tonton Sekarang"}

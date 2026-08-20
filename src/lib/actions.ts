@@ -57,7 +57,7 @@ export async function updateContentAction(id: string, payload: any) {
         }
 
         // 4. Force Revalidate (Gunakan revalidatePath agar instan)
-        revalidateTag("contents");
+
         revalidatePath("/", "layout"); // Revalidasi seluruh site agar navigasi & home update
         revalidatePath(`/nonton/${payload.slug}`);
 
@@ -163,7 +163,7 @@ export async function bulkInjectAction(data: any[]) {
             successCount++;
         }
 
-        revalidateTag("contents");
+
         revalidatePath("/", "layout");
 
         return { success: true, inserted: successCount, skipped: skippedCount };
@@ -189,7 +189,7 @@ export async function bulkDeleteAction(ids: string[]) {
             throw new Error(error.message);
         }
 
-        revalidateTag("contents");
+
         revalidatePath("/", "layout");
 
         return { success: true };

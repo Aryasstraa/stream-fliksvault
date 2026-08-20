@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `Nonton ${content.title} Sub Indo`;
   const description =
     content.synopsis?.slice(0, 160) ??
-    `Nonton ${content.title} online gratis di FlixVault.`;
+    `Nonton ${content.title} online gratis di MovieTeater.`;
 
   return {
     title,
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export async function generateStaticParams() {
   const slugs = await getCachedContentSlugs();
-  return slugs.map((c) => ({ slug: c.slug }));
+  return slugs.map((c: { slug: string }) => ({ slug: c.slug }));
 }
 
 export default async function DetailPage({ params }: Props) {

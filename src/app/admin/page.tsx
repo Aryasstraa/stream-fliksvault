@@ -1,15 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [error, setError] = useState("");
+
+  // Jika user sudah login, langsung redirect ke dashboard
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }: { data: { user: import('@supabase/supabase-js').User | null } }) => {
+      if (user) {
+        const next = searchParams.get("next") || "/admin/dashboard";
+        router.replace(next);
+      } else {
+        setChecking(false);
+      }
+    });
+  }, [router, searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +38,10 @@ export default function AdminLoginPage() {
 
       if (authError) throw authError;
 
-      router.push("/admin/dashboard");
+      // Setelah login sukses, redirect ke halaman yang dituju (atau dashboard)
+      const next = searchParams.get("next") || "/admin/dashboard";
+      router.push(next);
+      router.refresh(); // Penting: refresh agar middleware membaca session baru
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -36,10 +53,25 @@ export default function AdminLoginPage() {
     }
   };
 
-  // Demo login tanpa Supabase untuk testing lokal
-  const handleDemoLogin = () => {
-    router.push("/admin/dashboard");
-  };
+  // Tampilkan loading spinner saat mengecek status login
+  if (checking) {
+    return (
+      <div
+        className="login-page"
+        style={{
+          paddingTop: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center", color: "var(--text-secondary)" }}>
+          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🔐</div>
+          <p style={{ fontSize: "0.9rem" }}>Memeriksa sesi...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-page" style={{ paddingTop: 0 }}>
@@ -75,10 +107,11 @@ export default function AdminLoginPage() {
               id="admin-email"
               type="email"
               className="form-input"
-              placeholder="admin@flixvault.app"
+              placeholder="admin@movieteater.app"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
           <div className="form-group">
@@ -91,6 +124,7 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
 
@@ -100,25 +134,21 @@ export default function AdminLoginPage() {
             style={{ width: "100%", marginTop: "0.5rem" }}
             disabled={loading}
           >
-            {loading ? "Memproses..." : "Masuk"}
+            {loading ? "Memproses..." : "🔐 Masuk"}
           </button>
         </form>
 
         <div
           style={{
-            borderTop: "1px solid var(--border)",
             marginTop: "1.25rem",
-            paddingTop: "1.25rem",
+            paddingTop: "1rem",
+            borderTop: "1px solid var(--border)",
+            fontSize: "0.78rem",
+            color: "var(--text-muted)",
+            textAlign: "center",
           }}
         >
-          <button
-            id="demo-login-btn"
-            onClick={handleDemoLogin}
-            className="btn btn-ghost"
-            style={{ width: "100%", fontSize: "0.85rem" }}
-          >
-            🚀 Demo Login (tanpa Supabase)
-          </button>
+          🔒 Area terbatas. Hanya administrator yang diizinkan masuk.
         </div>
       </div>
     </div>

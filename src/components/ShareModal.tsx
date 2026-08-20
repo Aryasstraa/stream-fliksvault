@@ -25,7 +25,7 @@ export default function ShareModal({ data, isOpen, onClose }: ShareModalProps) {
   if (!isOpen) return null;
 
   const baseUrl =
-    typeof window !== "undefined" ? window.location.origin : "https://flixvault.app";
+    typeof window !== "undefined" ? window.location.origin : "https://movieteater.app";
 
   const generatedUrl = buildUtmUrl(baseUrl, data.slug, selectedPlatform);
 
@@ -84,7 +84,7 @@ export default function ShareModal({ data, isOpen, onClose }: ShareModalProps) {
             </div>
           )}
           <div className="preview-body">
-            <div className="preview-domain">flixvault.app</div>
+            <div className="preview-domain">movieteater.app</div>
             <div className="preview-title-text">{data.title}</div>
             <div className="preview-desc-text">{data.synopsis}</div>
           </div>

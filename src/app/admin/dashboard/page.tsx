@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import ShareModal from "@/components/ShareModal";
@@ -13,16 +14,36 @@ const SIDEBAR_LINKS = [
   { href: "/admin/dashboard/tambah", label: "➕ Tambah Konten", id: "nav-add" },
   { href: "/admin/dashboard/pengaturan", label: "⚙️ Pengaturan", id: "nav-settings" },
   { href: "/", label: "🌐 Lihat Website", id: "nav-site" },
-  { href: "/admin", label: "🚪 Logout", id: "nav-logout" },
 ];
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const [contents, setContents] = useState<Content[]>([]);
   const [shareTarget, setShareTarget] = useState<ShareData | null>(null);
   const [isInjecting, setIsInjecting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [authChecked, setAuthChecked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Verifikasi sesi aktif — sebagai lapisan keamanan kedua setelah middleware
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }: { data: { user: import('@supabase/supabase-js').User | null } }) => {
+      if (!user) {
+        router.replace("/admin");
+      } else {
+        setAuthChecked(true);
+        loadContents();
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/admin");
+    router.refresh();
+  };
 
   const loadContents = async () => {
     const { data } = await supabase
@@ -35,9 +56,8 @@ export default function AdminDashboardPage() {
     }
   };
 
-  useEffect(() => {
-    loadContents();
-  }, []);
+  // loadContents dipanggil setelah authChecked — tidak perlu useEffect terpisah
+  // (sudah dipanggil di dalam auth check di atas)
 
   const handleShareClick = (content: Content) => {
     setShareTarget({
@@ -131,6 +151,26 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Tampilkan loading sementara auth dicek
+  if (!authChecked) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--text-secondary)",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🔐</div>
+          <p style={{ fontSize: "0.9rem" }}>Memverifikasi sesi...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="admin-wrapper" style={{ paddingTop: 0 }}>
       {/* Sidebar */}
@@ -151,6 +191,33 @@ export default function AdminDashboardPage() {
                 </Link>
               </li>
             ))}
+            <li>
+              <button
+                id="nav-logout"
+                onClick={handleLogout}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0.6rem 1rem",
+                  borderRadius: "var(--radius-sm)",
+                  color: "var(--error, #f85149)",
+                  fontSize: "0.9rem",
+                  width: "100%",
+                  textAlign: "left",
+                  transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.target as HTMLElement).style.background =
+                    "rgba(248, 81, 73, 0.1)")
+                }
+                onMouseLeave={(e) =>
+                  ((e.target as HTMLElement).style.background = "none")
+                }
+              >
+                🚪 Logout
+              </button>
+            </li>
           </ul>
         </nav>
       </aside>

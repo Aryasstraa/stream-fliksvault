@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { makeSlug, parseEpisodeUrls } from "@/lib/utils";
+import Swal from "sweetalert2";
 
 export default function TambahKontenPage() {
+  const router = useRouter();
   const [genresList, setGenresList] = useState<{id: string, name: string}[]>([]);
 
   useEffect(() => {
@@ -27,10 +30,9 @@ export default function TambahKontenPage() {
     episodesBulk: "",     // untuk series (bulk textarea)
   });
   const [slug, setSlug] = useState("");
-  const [posterFile, setPosterFile] = useState<File | null>(null);
-  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [posterUrl, setPosterUrl] = useState("");
+  const [bannerUrl, setBannerUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [newGenreText, setNewGenreText] = useState("");
   const [addingGenre, setAddingGenre] = useState(false);
 
@@ -81,31 +83,7 @@ export default function TambahKontenPage() {
     setLoading(true);
 
     try {
-      // === STEP 1: Upload Poster & Banner ke R2 ===
-      let posterUrl = "";
-      let bannerUrl = "";
-
-      if (posterFile) {
-        const fd = new FormData();
-        fd.append("file", posterFile);
-        fd.append("folder", "posters");
-        fd.append("filename", `${slug}.${posterFile.name.split(".").pop()}`);
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        const data = await res.json();
-        posterUrl = data.url;
-      }
-
-      if (bannerFile) {
-        const fd = new FormData();
-        fd.append("file", bannerFile);
-        fd.append("folder", "banners");
-        fd.append("filename", `${slug}.${bannerFile.name.split(".").pop()}`);
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        const data = await res.json();
-        bannerUrl = data.url;
-      }
-
-      // === STEP 2: Simpan konten ke Supabase ===
+      // === STEP 1: Simpan konten ke Supabase ===
       const { data: content, error: contentError } = await supabase
         .from("contents")
         .insert({
@@ -123,7 +101,7 @@ export default function TambahKontenPage() {
         
       if (contentError || !content) throw contentError;
 
-      // === STEP 3: Simpan episodes ke Supabase ===
+      // === STEP 2: Simpan episodes ke Supabase ===
       const episodeUrls =
         form.type === "series"
           ? parseEpisodeUrls(form.episodesBulk)
@@ -138,7 +116,7 @@ export default function TambahKontenPage() {
         await supabase.from("episodes").insert(episodes);
       }
       
-      // === STEP 4: Simpan relasi genre ===
+      // === STEP 3: Simpan relasi genre ===
       if (form.selectedGenres.length > 0) {
         const contentGenres = form.selectedGenres.map(gId => ({
           content_id: content.id,
@@ -155,7 +133,19 @@ export default function TambahKontenPage() {
         episodeUrls,
       });
 
-      setSuccess(true);
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Konten berhasil ditambahkan!',
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+        background: 'var(--bg-card)',
+        color: 'var(--text-primary)'
+      }).then(() => {
+        router.push('/admin/dashboard');
+      });
     } catch (err) {
       console.error(err);
     } finally {
@@ -163,37 +153,7 @@ export default function TambahKontenPage() {
     }
   };
 
-  if (success) {
-    return (
-      <div className="admin-wrapper" style={{ paddingTop: 0 }}>
-        <aside className="admin-sidebar">
-          <div className="admin-sidebar-logo">
-            <span className="logo-text">Admin<span>Panel</span></span>
-          </div>
-        </aside>
-        <main className="admin-main" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>✅</div>
-            <h2>Konten berhasil ditambahkan!</h2>
-            <p style={{ color: "var(--text-secondary)", margin: "1rem 0 1.5rem" }}>
-              Slug: <code style={{ color: "var(--admin-accent)" }}>/nonton/{slug}</code>
-            </p>
-            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-              <Link href="/admin/dashboard" className="btn btn-ghost">
-                ← Kembali ke Dashboard
-              </Link>
-              <button
-                className="btn btn-admin"
-                onClick={() => { setSuccess(false); setForm({ title: "", type: "film", synopsis: "", year: new Date().getFullYear().toString(), rating: "", selectedGenres: [], episodeUrl: "", episodesBulk: "" }); setSlug(""); }}
-              >
-                + Tambah Lagi
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+
 
   return (
     <div className="admin-wrapper" style={{ paddingTop: 0 }}>
@@ -396,33 +356,43 @@ export default function TambahKontenPage() {
             <div>
               {/* Upload Aset */}
               <div className="settings-card" style={{ marginBottom: "1.5rem" }}>
-                <div className="settings-card-title">Upload Aset (Cloudflare R2)</div>
+                <div className="settings-card-title">Gambar Aset (URL Eksternal)</div>
                 <div className="settings-card-desc">
-                  File akan diupload langsung ke R2. URL disimpan ke Supabase.
+                  Masukkan link gambar dari web lain (misal dari TMDB, IMDB, Pinterest).
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="input-poster">Poster (JPG/PNG, rasio 2:3)</label>
+                  <label className="form-label" htmlFor="input-poster">URL Poster (rasio 2:3)</label>
                   <input
                     id="input-poster"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    type="url"
                     className="form-input"
-                    style={{ paddingTop: "0.4rem" }}
-                    onChange={(e) => setPosterFile(e.target.files?.[0] ?? null)}
+                    placeholder="https://..."
+                    value={posterUrl}
+                    onChange={(e) => setPosterUrl(e.target.value)}
                   />
+                  {posterUrl && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <img src={posterUrl} alt="Preview Poster" style={{ width: "80px", borderRadius: "4px" }} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="input-banner">Banner / Background (rasio 16:9)</label>
+                  <label className="form-label" htmlFor="input-banner">URL Banner / Background (rasio 16:9)</label>
                   <input
                     id="input-banner"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    type="url"
                     className="form-input"
-                    style={{ paddingTop: "0.4rem" }}
-                    onChange={(e) => setBannerFile(e.target.files?.[0] ?? null)}
+                    placeholder="https://..."
+                    value={bannerUrl}
+                    onChange={(e) => setBannerUrl(e.target.value)}
                   />
+                  {bannerUrl && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <img src={bannerUrl} alt="Preview Banner" style={{ width: "100%", maxHeight: "100px", objectFit: "cover", borderRadius: "4px" }} />
+                    </div>
+                  )}
                 </div>
               </div>
 

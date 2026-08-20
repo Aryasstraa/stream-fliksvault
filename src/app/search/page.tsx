@@ -13,13 +13,13 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   if (!q) {
     return {
       title: "Pencarian",
-      description: "Cari film dan anime di FlixVault.",
+      description: "Cari film dan anime di MovieTeater.",
     };
   }
   
   return {
-    title: `Pencarian: ${q} — FlixVault`,
-    description: `Hasil pencarian untuk "${q}" di FlixVault.`,
+    title: `Pencarian: ${q} — MovieTeater`,
+    description: `Hasil pencarian untuk "${q}" di MovieTeater.`,
   };
 }
 

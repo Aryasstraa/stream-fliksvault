@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { supabase } from "./supabase";
+import type { Content } from "./types";
 
 // ============================================================
 // Cached Data Fetchers — bekerja di dev & production
@@ -8,13 +9,13 @@ import { supabase } from "./supabase";
 
 /** Ambil semua konten (untuk home page) — cache 5 menit */
 export const getCachedAllContents = unstable_cache(
-  async () => {
+  async (): Promise<Content[]> => {
     const { data } = await supabase
       .from("contents")
       .select("*, genres(*)")
       .order("rating", { ascending: false })
       .limit(24);
-    return data || [];
+    return (data as Content[]) || [];
   },
   ["all-contents"],
   { revalidate: 300, tags: ["contents"] }

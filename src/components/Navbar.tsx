@@ -25,16 +25,21 @@ export default function Navbar() {
     }
   };
 
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <header className="nav">
       <div className="wrap nav-row">
         <div className="logo" style={{ display: "flex", alignItems: "center" }}>
           <Link href="/">
             <Image
-              src="/logo.png"
-              alt="FlixVault Logo"
-              width={120}
-              height={36}
+              src="/logo1.png"
+              alt="MovieTeater Logo"
+              width={240}
+              height={80}
+              style={{ width: "auto", height: "40px", objectFit: "contain" }}
               priority
             />
           </Link>
@@ -69,9 +74,9 @@ export default function Navbar() {
                 width: '180px'
               }}
             />
-            <button 
-              type="submit" 
-              className="search-btn" 
+            <button
+              type="submit"
+              className="search-btn"
               aria-label="Search"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -16,14 +16,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (genre === "film") {
     return {
       title: "Nonton Film Sub Indo",
-      description: "Daftar film terlengkap di FlixVault.",
+      description: "Daftar film terlengkap di MovieTeater.",
     };
   }
 
   if (genre === "semua") {
     return {
       title: "Semua Konten Sub Indo",
-      description: "Daftar semua film dan serial terlengkap di FlixVault.",
+      description: "Daftar semua film dan serial terlengkap di MovieTeater.",
     };
   }
 
@@ -31,13 +31,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!result) return { title: "Kategori Tidak Ditemukan" };
   return {
     title: `Nonton ${result.pageTitle} Sub Indo`,
-    description: `Daftar film dan serial ${result.pageTitle} terlengkap di FlixVault.`,
+    description: `Daftar film dan serial ${result.pageTitle} terlengkap di MovieTeater.`,
   };
 }
 
 export async function generateStaticParams() {
   const genres = await getCachedGenreSlugs();
-  const params = genres.map((g) => ({ genre: g.slug }));
+  const params = genres.map((g: { slug: string }) => ({ genre: g.slug }));
   params.push({ genre: "film" });
   params.push({ genre: "semua" });
   params.push({ genre: "drachin" });
@@ -81,7 +81,7 @@ export default async function GenrePage({ params }: Props) {
         </div>
       ) : (
         <div className="card-grid">
-          {contents.map((content) => (
+          {contents.map((content: any) => (
             <ContentCard key={content.id} content={content} />
           ))}
         </div>

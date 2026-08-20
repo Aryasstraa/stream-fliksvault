@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { makeSlug, parseEpisodeUrls } from "@/lib/utils";
 import { updateContentAction } from "@/lib/actions";
+import Swal from "sweetalert2";
 
 export default function EditKontenPage() {
   const params = useParams();
@@ -14,8 +15,8 @@ export default function EditKontenPage() {
 
   const [genresList, setGenresList] = useState<{ id: string, name: string }[]>([]);
   const [initialId, setInitialId] = useState("");
-  const [existingPoster, setExistingPoster] = useState("");
-  const [existingBanner, setExistingBanner] = useState("");
+  const [posterUrl, setPosterUrl] = useState("");
+  const [bannerUrl, setBannerUrl] = useState("");
 
   useEffect(() => {
     async function loadGenres() {
@@ -36,10 +37,7 @@ export default function EditKontenPage() {
     episodesBulk: "",
   });
   const [slug, setSlug] = useState("");
-  const [posterFile, setPosterFile] = useState<File | null>(null);
-  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [newGenreText, setNewGenreText] = useState("");
   const [addingGenre, setAddingGenre] = useState(false);
 
@@ -67,8 +65,8 @@ export default function EditKontenPage() {
         });
         setSlug(data.slug);
         setInitialId(data.id);
-        setExistingPoster(data.poster_url || "");
-        setExistingBanner(data.banner_url || "");
+        setPosterUrl(data.poster_url || "");
+        setBannerUrl(data.banner_url || "");
       }
     }
     loadContent();
@@ -126,34 +124,7 @@ export default function EditKontenPage() {
 
     setLoading(true);
     try {
-      let posterUrl = existingPoster;
-      let bannerUrl = existingBanner;
-
-      // 2. Upload Poster (Hanya jika ada file baru)
-      if (posterFile) {
-        const fd = new FormData();
-        fd.append("file", posterFile);
-        fd.append("folder", "posters");
-        fd.append("filename", `${slug}-${Date.now()}.${posterFile.name.split(".").pop()}`);
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!res.ok) throw new Error("Gagal mengunggah poster baru.");
-        const data = await res.json();
-        posterUrl = data.url;
-      }
-
-      // 3. Upload Banner (Hanya jika ada file baru)
-      if (bannerFile) {
-        const fd = new FormData();
-        fd.append("file", bannerFile);
-        fd.append("folder", "banners");
-        fd.append("filename", `${slug}-banner-${Date.now()}.${bannerFile.name.split(".").pop()}`);
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!res.ok) throw new Error("Gagal mengunggah banner baru.");
-        const data = await res.json();
-        bannerUrl = data.url;
-      }
-
-      // 4. Persiapkan & Bersihkan Data Episode
+      // 2. Persiapkan & Bersihkan Data Episode
       const rawUrls = form.type === "series"
         ? parseEpisodeUrls(form.episodesBulk)
         : form.episodeUrl ? [form.episodeUrl] : [];
@@ -166,7 +137,7 @@ export default function EditKontenPage() {
           external_url: url.trim(),
         }));
 
-      // 5. PANGGIL SERVER ACTION & TANGKAP HASILNYA
+      // 3. PANGGIL SERVER ACTION & TANGKAP HASILNYA
       const result = await updateContentAction(initialId, {
         title: form.title,
         slug: slug,
@@ -180,10 +151,21 @@ export default function EditKontenPage() {
         genres: form.selectedGenres
       });
 
-      // 6. CEK APAKAH SERVER ACTION BERHASIL
+      // 4. CEK APAKAH SERVER ACTION BERHASIL
       if (result && result.success) {
-        setSuccess(true);
-        window.scrollTo(0, 0);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Perubahan berhasil disimpan!',
+          showConfirmButton: false,
+          timer: 1500,
+          timerProgressBar: true,
+          background: 'var(--bg-card)',
+          color: 'var(--text-primary)'
+        }).then(() => {
+          router.push('/admin/dashboard');
+        });
       } else {
         // Jika server action mengirim success: false
         throw new Error(result?.error || "Terjadi kesalahan saat menyimpan ke database.");
@@ -197,31 +179,7 @@ export default function EditKontenPage() {
     }
   };
 
-  if (success) {
-    return (
-      <div className="admin-wrapper" style={{ paddingTop: 0 }}>
-        <aside className="admin-sidebar">
-          <div className="admin-sidebar-logo">
-            <span className="logo-text">Admin<span>Panel</span></span>
-          </div>
-        </aside>
-        <main className="admin-main" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>✅</div>
-            <h2>Perubahan berhasil disimpan!</h2>
-            <p style={{ color: "var(--text-secondary)", margin: "1rem 0 1.5rem" }}>
-              Slug: <code style={{ color: "var(--admin-accent)" }}>/nonton/{slug}</code>
-            </p>
-            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-              <Link href="/admin/dashboard" className="btn btn-primary">
-                ← Kembali ke Dashboard
-              </Link>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+
 
   return (
     <div className="admin-wrapper" style={{ paddingTop: 0 }}>
@@ -424,43 +382,43 @@ export default function EditKontenPage() {
             <div>
               {/* Upload Aset */}
               <div className="settings-card" style={{ marginBottom: "1.5rem" }}>
-                <div className="settings-card-title">Upload Aset (Cloudflare R2)</div>
+                <div className="settings-card-title">Gambar Aset (URL Eksternal)</div>
                 <div className="settings-card-desc">
-                  Biarkan kosong jika tidak ingin mengubah gambar yang sudah ada.
+                  Masukkan link gambar dari web lain (misal dari TMDB, IMDB, Pinterest).
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="input-poster">Poster Baru (JPG/PNG, rasio 2:3)</label>
-                  {existingPoster && (
-                    <div style={{ marginBottom: "0.5rem", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      Gambar saat ini: <a href={existingPoster} target="_blank" rel="noreferrer" style={{ color: "var(--admin-accent)" }}>Lihat Poster</a>
-                    </div>
-                  )}
+                  <label className="form-label" htmlFor="input-poster">URL Poster (rasio 2:3)</label>
                   <input
                     id="input-poster"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    type="url"
                     className="form-input"
-                    style={{ paddingTop: "0.4rem" }}
-                    onChange={(e) => setPosterFile(e.target.files?.[0] ?? null)}
+                    placeholder="https://..."
+                    value={posterUrl}
+                    onChange={(e) => setPosterUrl(e.target.value)}
                   />
+                  {posterUrl && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <img src={posterUrl} alt="Preview Poster" style={{ width: "80px", borderRadius: "4px" }} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="input-banner">Banner Baru (rasio 16:9)</label>
-                  {existingBanner && (
-                    <div style={{ marginBottom: "0.5rem", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      Gambar saat ini: <a href={existingBanner} target="_blank" rel="noreferrer" style={{ color: "var(--admin-accent)" }}>Lihat Banner</a>
-                    </div>
-                  )}
+                  <label className="form-label" htmlFor="input-banner">URL Banner / Background (rasio 16:9)</label>
                   <input
                     id="input-banner"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    type="url"
                     className="form-input"
-                    style={{ paddingTop: "0.4rem" }}
-                    onChange={(e) => setBannerFile(e.target.files?.[0] ?? null)}
+                    placeholder="https://..."
+                    value={bannerUrl}
+                    onChange={(e) => setBannerUrl(e.target.value)}
                   />
+                  {bannerUrl && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <img src={bannerUrl} alt="Preview Banner" style={{ width: "100%", maxHeight: "100px", objectFit: "cover", borderRadius: "4px" }} />
+                    </div>
+                  )}
                 </div>
               </div>
 
