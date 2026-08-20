@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { Bebas_Neue, Plus_Jakarta_Sans, Space_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import FooterAd from "@/components/FooterAd";
+import BottomAd from "@/components/BottomAd";
 import Link from "next/link";
-
 const bebasNeue = Bebas_Neue({
   weight: "400",
   subsets: ["latin"],
@@ -52,7 +51,6 @@ export default function RootLayout({
         <Navbar />
         <main>{children}</main>
         <footer>
-          <FooterAd />
           <div className="wrap foot-row">
             <div>
               <div className="foot-logo">
@@ -78,6 +76,7 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        <BottomAd />
       </body>
     </html>
   );

@@ -15,5 +15,5 @@ export default function AdInjector({ htmlContent }: { htmlContent: string }) {
     container.appendChild(slotHtml);
   }, [htmlContent]);
 
-  return <div ref={containerRef} style={{ width: "100%", display: "flex", justifyContent: "center", margin: "1rem 0" }} />;
+  return <div ref={containerRef} style={{ display: "contents" }} />;
 }

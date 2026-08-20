@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import AdInjector from "./AdInjector";
 
-export default function FooterAd() {
+export default function TopAd() {
   const [nativeBannerScript, setNativeBannerScript] = useState<string>("");
 
   useEffect(() => {
@@ -17,9 +17,5 @@ export default function FooterAd() {
 
   if (!nativeBannerScript) return null;
 
-  return (
-    <div style={{ width: "100%", margin: "2rem auto", textAlign: "center" }}>
-      <AdInjector htmlContent={nativeBannerScript} />
-    </div>
-  );
+  return <AdInjector htmlContent={nativeBannerScript} />;
 }
