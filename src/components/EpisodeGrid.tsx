@@ -1,7 +1,6 @@
 "use client";
 
 import { Episode } from "@/lib/types";
-import { useEffect, useState } from "react";
 
 interface EpisodeGridProps {
   episodes: Episode[];
@@ -9,17 +8,34 @@ interface EpisodeGridProps {
   contentTitle: string;
 }
 
+/**
+ * Memicu popunder Adsterra secara manual.
+ * Adsterra menyimpan fungsi trigger-nya di document.onclick.
+ * Kita sudah memblokir listener global itu di AdInjector.tsx,
+ * dan menyimpannya di window.__adsterraTrigger agar bisa dipanggil di sini.
+ */
+function triggerPopunder() {
+  const trigger = (window as any).__adsterraTrigger;
+  if (typeof trigger === "function") {
+    try {
+      // Panggil fungsi Adsterra dengan simulasi event klik
+      trigger(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    } catch (e) {
+      // Abaikan error jika Adsterra belum ter-load
+    }
+  }
+}
+
 export default function EpisodeGrid({
   episodes,
   type,
   contentTitle,
 }: EpisodeGridProps) {
-  // Popunder ditangani secara otomatis oleh script Adsterra yang diinjeksi secara global.
-
   const handleClick = (episode: Episode) => {
-    // 1. Redirect tab saat ini ke URL video eksternal
-    // Kita berikan delay sedikit (200ms) agar script Adsterra sempat menangkap event click
-    // dan membuka popundernya sebelum halaman ini berpindah.
+    // 1. Picu Popunder Adsterra HANYA dari sini (tombol nonton)
+    triggerPopunder();
+
+    // 2. Redirect tab saat ini ke URL video eksternal setelah delay singkat
     setTimeout(() => {
       let url = episode.external_url;
       if (!url || url.trim() === "" || url === "N/A" || !url.includes(".")) {
