@@ -126,9 +126,16 @@ export default async function DetailPage({ params }: Props) {
               <span>{content.year}</span>
               <span>|</span>
               <span style={{ textTransform: "capitalize" }}>
-                {content.type === "series"
-                  ? `${episodes.length} Episode`
-                  : "Film"}
+                {(() => {
+                  const baseType = content.type === "series" ? `${episodes.length} Episode` : "Film";
+                  
+                  // Deteksi format dari kolom baru atau fallback ke genre lama
+                  const mediaFormat = content.media_format 
+                    || (content.genres?.some((g: any) => g.slug === 'anime') ? 'Anime' 
+                      : content.genres?.some((g: any) => g.slug === 'animation') ? 'Animasi' : null);
+                  
+                  return mediaFormat ? `${mediaFormat} • ${baseType}` : baseType;
+                })()}
               </span>
             </div>
 
