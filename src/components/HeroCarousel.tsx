@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Content } from "@/lib/types";
 
 interface HeroCarouselProps {
@@ -98,13 +97,11 @@ export default function HeroCarousel({ items }: HeroCarouselProps) {
                 <div className="hero-poster">
                     {currentContent.poster_url && (
                         <div className="hero-poster-wrapper fade-in-right">
-                            <Image
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
                                 src={currentContent.poster_url}
                                 alt={currentContent.title}
-                                fill
-                                sizes="(max-width: 768px) 100vw, 400px"
-                                style={{ objectFit: "cover" }}
-                                priority
+                                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                             />
                             <div className="hero-poster-overlay">
                                 <span className="hero-poster-label">

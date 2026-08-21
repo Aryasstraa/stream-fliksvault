@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Content } from "@/lib/types";
 
 interface ContentCardProps {
@@ -20,13 +19,12 @@ export default function ContentCard({ content }: ContentCardProps) {
         <div className={`tone t${toneIndex}`}></div>
 
         {content.poster_url && (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={content.poster_url}
             alt={content.title}
-            fill
-            sizes="(max-width: 768px) 50vw, 200px"
-            style={{ objectFit: "cover", zIndex: 0 }}
             loading="lazy"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
           />
         )}
 

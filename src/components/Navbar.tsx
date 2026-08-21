@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -72,13 +71,11 @@ export default function Navbar() {
       <div className="wrap nav-row">
         <div className="logo" style={{ display: "flex", alignItems: "center" }}>
           <Link href="/">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/logo1.png"
               alt="MovieTeater Logo"
-              width={240}
-              height={80}
               style={{ width: "auto", height: "40px", objectFit: "contain" }}
-              priority
             />
           </Link>
         </div>

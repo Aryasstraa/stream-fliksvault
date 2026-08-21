@@ -90,16 +90,15 @@ export default async function DetailPage({ params }: Props) {
           {/* Poster */}
           <aside>
             <div className="detail-poster">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={
                   content.poster_url ??
                   "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80"
                 }
                 alt={`Poster ${content.title}`}
-                width={400}
-                height={590}
-                style={{ width: "100%", height: "auto" }}
-                priority
+                style={{ width: "100%", height: "auto", borderRadius: "8px", display: "block" }}
+                loading="eager"
               />
             </div>
           </aside>
