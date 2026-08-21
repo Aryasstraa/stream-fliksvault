@@ -51,12 +51,33 @@ export const getCachedContentsByGenre = unstable_cache(
 
     if (mediaFormatMap[genre]) {
       const formatValue = mediaFormatMap[genre];
-      const { data } = await supabase
+      
+      // 1. Fetch by media_format (Data baru yang sudah di-set dari admin)
+      const { data: byFormat } = await supabase
         .from("contents")
         .select("*, genres(*)")
         .eq("media_format", formatValue)
         .order("created_at", { ascending: false });
-      return { contents: data || [], pageTitle: formatValue };
+        
+      // 2. Fetch by fallback genre slug (Data lama yang mengandalkan genre)
+      let fallbackSlugs = [genre];
+      if (genre === 'anime') fallbackSlugs = ['anime', 'animation'];
+      else if (genre === 'animasi') fallbackSlugs = ['animation'];
+      
+      const { data: byGenre } = await supabase
+        .from("contents")
+        .select("*, genres!inner(*)")
+        .in("genres.slug", fallbackSlugs)
+        .order("created_at", { ascending: false });
+
+      // 3. Merge dan deduplikasi berdasarkan ID
+      const allContents = [...(byFormat || []), ...(byGenre || [])];
+      const uniqueContents = Array.from(new Map(allContents.map(item => [item.id, item])).values());
+      
+      // 4. Sort ulang berdasarkan created_at desc
+      uniqueContents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      return { contents: uniqueContents, pageTitle: formatValue };
     }
 
     // Fallback: Genre spesifik lainnya (action, comedy, dll)
