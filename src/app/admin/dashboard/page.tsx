@@ -10,10 +10,10 @@ import { Content, ShareData } from "@/lib/types";
 import { bulkInjectAction, bulkDeleteAction } from "@/lib/actions";
 
 const SIDEBAR_LINKS = [
-  { href: "/admin/dashboard", label: "📋 Daftar Konten", id: "nav-list" },
-  { href: "/admin/dashboard/tambah", label: "➕ Tambah Konten", id: "nav-add" },
-  { href: "/admin/dashboard/pengaturan", label: "⚙️ Pengaturan", id: "nav-settings" },
-  { href: "/", label: "🌐 Lihat Website", id: "nav-site" },
+  { href: "/admin/dashboard", label: "Daftar Konten", id: "nav-list" },
+  { href: "/admin/dashboard/tambah", label: "Tambah Konten", id: "nav-add" },
+  { href: "/admin/dashboard/pengaturan", label: "Pengaturan", id: "nav-settings" },
+  { href: "/", label: "Lihat Website", id: "nav-site" },
 ];
 
 export default function AdminDashboardPage() {
@@ -24,6 +24,7 @@ export default function AdminDashboardPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [authChecked, setAuthChecked] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Progress states for injection
   const [injectProgress, setInjectProgress] = useState(0);
@@ -153,9 +154,22 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const filteredContents = (() => {
+    if (!searchQuery.trim()) return contents;
+    const safeQuery = searchQuery.trim().replace(/[^a-zA-Z0-9]/g, '');
+    if (safeQuery.length < 1) return contents;
+    const searchPattern = safeQuery.split('').join('[-\\s:]?');
+    try {
+      const regex = new RegExp(searchPattern, 'i');
+      return contents.filter(c => regex.test(c.title));
+    } catch (e) {
+      return contents;
+    }
+  })();
+
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedIds(contents.map(c => c.id));
+      setSelectedIds(filteredContents.map(c => c.id));
     } else {
       setSelectedIds([]);
     }
@@ -254,7 +268,7 @@ export default function AdminDashboardPage() {
                   ((e.target as HTMLElement).style.background = "none")
                 }
               >
-                🚪 Logout
+                Logout
               </button>
             </li>
           </ul>
@@ -263,8 +277,8 @@ export default function AdminDashboardPage() {
 
       {/* Main */}
       <main className="admin-main">
-        <div className="admin-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 className="admin-page-title">📋 Daftar Konten</h1>
+        <div className="admin-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+          <h1 className="admin-page-title" style={{ margin: 0 }}>Daftar Konten</h1>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
             {selectedIds.length > 0 && (
               <button
@@ -272,7 +286,7 @@ export default function AdminDashboardPage() {
                 onClick={handleBulkDelete}
                 disabled={isDeleting}
               >
-                {isDeleting ? "⏳ Menghapus..." : `🗑 Hapus Terpilih (${selectedIds.length})`}
+                {isDeleting ? "Menghapus..." : `🗑 Hapus Terpilih (${selectedIds.length})`}
               </button>
             )}
             <input
@@ -287,7 +301,7 @@ export default function AdminDashboardPage() {
               onClick={() => fileInputRef.current?.click()}
               disabled={isInjecting}
             >
-              {isInjecting ? "⏳ Menginjeksi..." : "Auto Inject (JSON)"}
+              {isInjecting ? "Menginjeksi..." : "Auto Inject (JSON)"}
             </button>
             <Link href="/admin/dashboard/tambah" className="btn btn-admin btn-sm">
               + Tambah Konten
@@ -325,6 +339,24 @@ export default function AdminDashboardPage() {
           ))}
         </div>
 
+        <div style={{ flex: 1, minWidth: "250px", maxWidth: "100%", padding: "1rem 0" }}>
+          <input
+            type="text"
+            placeholder="🔍 Cari judul film"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              borderRadius: "6px",
+              border: "1px solid var(--border)",
+              background: "var(--bg-surface)",
+              color: "var(--text)",
+              outline: "none"
+            }}
+          />
+        </div>
+
         {/* Table */}
         <div className="table-wrapper">
           <table className="data-table">
@@ -333,7 +365,7 @@ export default function AdminDashboardPage() {
                 <th style={{ width: "40px", textAlign: "center" }}>
                   <input
                     type="checkbox"
-                    checked={contents.length > 0 && selectedIds.length === contents.length}
+                    checked={filteredContents.length > 0 && selectedIds.length === filteredContents.length}
                     onChange={handleSelectAll}
                   />
                 </th>
@@ -346,73 +378,81 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {contents.map((content) => (
-                <tr key={content.id}>
-                  <td style={{ textAlign: "center" }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(content.id)}
-                      onChange={(e) => handleSelectRow(content.id, e.target.checked)}
-                    />
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                      {content.poster_url && (
-                        <Image
-                          src={content.poster_url}
-                          alt={content.title}
-                          width={36}
-                          height={52}
-                          style={{ borderRadius: "4px", objectFit: "cover", flexShrink: 0 }}
-                        />
-                      )}
-                      <div>
-                        <div style={{ fontWeight: 600, marginBottom: "0.15rem" }}>
-                          {content.title}
-                        </div>
-                        <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                          /nonton/{content.slug}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`type-badge ${content.type === "series" ? "type-badge-series" : "type-badge-film"}`}>
-                      {content.type === "series" ? "Series" : "Film"}
-                    </span>
-                  </td>
-                  <td>{content.year}</td>
-                  <td>
-                    {content.type === "series"
-                      ? `${content.episodes?.length ?? 0} Eps`
-                      : "1 Link"}
-                  </td>
-                  <td>⭐ {content.rating?.toFixed(1) ?? "-"}</td>
-                  <td>
-                    <div className="table-actions">
-                      <Link
-                        href={`/admin/dashboard/edit/${content.slug}`}
-                        className="btn btn-ghost btn-sm"
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        id={`share-btn-${content.id}`}
-                        className="btn btn-admin btn-sm"
-                        onClick={() => handleShareClick(content)}
-                      >
-                        Share
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDelete(content.id, content.title)}
-                      >
-                        Hapus
-                      </button>
-                    </div>
+              {filteredContents.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
+                    Tidak ada konten yang sesuai pencarian.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredContents.map((content) => (
+                  <tr key={content.id}>
+                    <td style={{ textAlign: "center" }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(content.id)}
+                        onChange={(e) => handleSelectRow(content.id, e.target.checked)}
+                      />
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        {content.poster_url && (
+                          <Image
+                            src={content.poster_url}
+                            alt={content.title}
+                            width={36}
+                            height={52}
+                            style={{ borderRadius: "4px", objectFit: "cover", flexShrink: 0 }}
+                          />
+                        )}
+                        <div>
+                          <div style={{ fontWeight: 600, marginBottom: "0.15rem" }}>
+                            {content.title}
+                          </div>
+                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                            /nonton/{content.slug}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`type-badge ${content.type === "series" ? "type-badge-series" : "type-badge-film"}`}>
+                        {content.type === "series" ? "Series" : "Film"}
+                      </span>
+                    </td>
+                    <td>{content.year}</td>
+                    <td>
+                      {content.type === "series"
+                        ? `${content.episodes?.length ?? 0} Eps`
+                        : "1 Link"}
+                    </td>
+                    <td>⭐ {content.rating?.toFixed(1) ?? "-"}</td>
+                    <td>
+                      <div className="table-actions">
+                        <Link
+                          href={`/admin/dashboard/edit/${content.slug}`}
+                          className="btn btn-ghost btn-sm"
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          id={`share-btn-${content.id}`}
+                          className="btn btn-admin btn-sm"
+                          onClick={() => handleShareClick(content)}
+                        >
+                          Share
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleDelete(content.id, content.title)}
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

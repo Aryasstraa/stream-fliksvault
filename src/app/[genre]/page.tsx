@@ -54,7 +54,7 @@ export default async function GenrePage({ params }: Props) {
   const { contents, pageTitle } = result;
 
   return (
-    <main className="wrap" style={{ paddingTop: "64px", paddingBottom: "64px", minHeight: "65vh" }}>
+    <main className="wrap" style={{ paddingTop: "1%", paddingBottom: "64px", minHeight: "65vh" }}>
       <div className="section-head">
         <div>
           <div className="eyebrow">

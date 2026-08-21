@@ -843,8 +843,49 @@ footer p {
 }
 
 @media (max-width:900px) {
+  .nav-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    height: auto;
+    margin-top: 20px;
+  }
+
+  .logo {
+    order: 1;
+  }
+
+  .nav-actions {
+    order: 2;
+  }
+
   nav.links {
+    order: 3;
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    justify-content: flex-start;
+    padding-top: 16px;
+    padding-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  nav.links::-webkit-scrollbar {
     display: none;
+  }
+
+  nav.links a {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .nav-actions input {
+    width: 140px !important;
+    /* Mencegah input kebesaran di mobile */
   }
 
   .wrap {
@@ -865,6 +906,7 @@ footer p {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 14px;
   }
+
 }
 
 
@@ -1550,11 +1592,10 @@ footer p {
 @media (max-width: 768px) {
   .detail-layout {
     grid-template-columns: 1fr;
-    margin-top: 0;
   }
 
   .detail-hero {
-    height: 35vh;
+    height: 1rem;
   }
 
   .detail-poster {
@@ -1577,6 +1618,40 @@ footer p {
   .platform-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  /* Hero Responsive */
+  .hero {
+    padding: 100px 0 40px;
+    min-height: auto;
+  }
+
+  .hero-layout {
+    flex-direction: column-reverse;
+    /* Poster di atas */
+    text-align: center;
+    gap: 32px;
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+  }
+
+  .badge-row {
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .cta-row {
+    justify-content: center;
+  }
+
+  .hero-poster {
+    width: 260px;
+    max-width: 80%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1590,5 +1665,52 @@ footer p {
 
   .episode-grid {
     grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  }
+
+  /* Hero adjustments for very small screens */
+  .hero {
+    padding: 90px 0 30px;
+  }
+
+  .hero h1 {
+    font-size: clamp(32px, 9vw, 42px);
+    margin-bottom: 16px;
+  }
+
+  .hero p.desc {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .hero-poster {
+    width: 220px;
+  }
+
+  .cta-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .cta-row .btn {
+    width: 100%;
+  }
+
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-hero {
+    height: 30vh;
+    min-height: 200px;
+  }
+
+  .detail-poster {
+    max-width: 180px;
+    margin: 0 auto;
+  }
+
+  .eyebrow {
+    height: 3rem;
+    min-height: 10px;
   }
 }
