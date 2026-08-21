@@ -24,6 +24,12 @@ export default function AdminDashboardPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [authChecked, setAuthChecked] = useState(false);
+
+  // Progress states for injection
+  const [injectProgress, setInjectProgress] = useState(0);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [injectStats, setInjectStats] = useState({ total: 0, processed: 0, success: 0, skipped: 0 });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Verifikasi sesi aktif — sebagai lapisan keamanan kedua setelah middleware
@@ -36,7 +42,7 @@ export default function AdminDashboardPage() {
         loadContents();
       }
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogout = async () => {
@@ -87,7 +93,6 @@ export default function AdminDashboardPage() {
     if (!file) return;
 
     try {
-      setIsInjecting(true);
       const text = await file.text();
       const jsonData = JSON.parse(text);
 
@@ -95,16 +100,50 @@ export default function AdminDashboardPage() {
         throw new Error("Format JSON tidak valid. Harus berupa Array.");
       }
 
-      const res = await bulkInjectAction(jsonData);
-      if (res.success) {
-        alert(`Injeksi selesai! Berhasil: ${res.inserted}, Dilewati (sudah ada): ${res.skipped}`);
-        loadContents();
-      } else {
-        alert(`Gagal injeksi data: ${res.error}`);
+      const totalItems = jsonData.length;
+      if (totalItems === 0) {
+        alert("File JSON kosong.");
+        return;
       }
+
+      setIsInjecting(true);
+      setShowProgressModal(true);
+      setInjectProgress(0);
+      setInjectStats({ total: totalItems, processed: 0, success: 0, skipped: 0 });
+
+      const chunkSize = 5;
+      let successCount = 0;
+      let skippedCount = 0;
+      let processedCount = 0;
+
+      for (let i = 0; i < totalItems; i += chunkSize) {
+        const chunk = jsonData.slice(i, i + chunkSize);
+        const res = await bulkInjectAction(chunk);
+
+        if (res.success) {
+          successCount += res.inserted || 0;
+          skippedCount += res.skipped || 0;
+        } else {
+          console.error(`Gagal injeksi chunk ${i}:`, res.error);
+        }
+
+        processedCount += chunk.length;
+        setInjectStats({ total: totalItems, processed: processedCount, success: successCount, skipped: skippedCount });
+        setInjectProgress(Math.round((processedCount / totalItems) * 100));
+      }
+
+      // Beri sedikit delay sebelum alert agar animasi 100% terlihat selesai
+      setTimeout(() => {
+        alert(`Injeksi selesai! Berhasil: ${successCount}, Dilewati (sudah ada): ${skippedCount}`);
+        setShowProgressModal(false);
+        setInjectProgress(0);
+        loadContents();
+      }, 500);
+
     } catch (err: any) {
       console.error(err);
       alert(`Terjadi kesalahan: ${err.message}`);
+      setShowProgressModal(false);
     } finally {
       setIsInjecting(false);
       // Reset input file
@@ -208,8 +247,8 @@ export default function AdminDashboardPage() {
                   transition: "background 0.2s",
                 }}
                 onMouseEnter={(e) =>
-                  ((e.target as HTMLElement).style.background =
-                    "rgba(248, 81, 73, 0.1)")
+                ((e.target as HTMLElement).style.background =
+                  "rgba(248, 81, 73, 0.1)")
                 }
                 onMouseLeave={(e) =>
                   ((e.target as HTMLElement).style.background = "none")
@@ -228,7 +267,7 @@ export default function AdminDashboardPage() {
           <h1 className="admin-page-title">📋 Daftar Konten</h1>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
             {selectedIds.length > 0 && (
-              <button 
+              <button
                 className="btn btn-danger btn-sm"
                 onClick={handleBulkDelete}
                 disabled={isDeleting}
@@ -236,19 +275,19 @@ export default function AdminDashboardPage() {
                 {isDeleting ? "⏳ Menghapus..." : `🗑 Hapus Terpilih (${selectedIds.length})`}
               </button>
             )}
-            <input 
-              type="file" 
-              accept=".json" 
+            <input
+              type="file"
+              accept=".json"
               ref={fileInputRef}
               style={{ display: "none" }}
               onChange={handleFileUpload}
             />
-            <button 
+            <button
               className="btn btn-ghost btn-sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={isInjecting}
             >
-              {isInjecting ? "⏳ Menginjeksi..." : "⚡ Auto Inject (JSON)"}
+              {isInjecting ? "⏳ Menginjeksi..." : "Auto Inject (JSON)"}
             </button>
             <Link href="/admin/dashboard/tambah" className="btn btn-admin btn-sm">
               + Tambah Konten
@@ -292,8 +331,8 @@ export default function AdminDashboardPage() {
             <thead>
               <tr>
                 <th style={{ width: "40px", textAlign: "center" }}>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={contents.length > 0 && selectedIds.length === contents.length}
                     onChange={handleSelectAll}
                   />
@@ -310,8 +349,8 @@ export default function AdminDashboardPage() {
               {contents.map((content) => (
                 <tr key={content.id}>
                   <td style={{ textAlign: "center" }}>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={selectedIds.includes(content.id)}
                       onChange={(e) => handleSelectRow(content.id, e.target.checked)}
                     />
@@ -355,20 +394,20 @@ export default function AdminDashboardPage() {
                         href={`/admin/dashboard/edit/${content.slug}`}
                         className="btn btn-ghost btn-sm"
                       >
-                        ✏️ Edit
+                        Edit
                       </Link>
                       <button
                         id={`share-btn-${content.id}`}
                         className="btn btn-admin btn-sm"
                         onClick={() => handleShareClick(content)}
                       >
-                        🔗 Share
+                        Share
                       </button>
-                      <button 
+                      <button
                         className="btn btn-danger btn-sm"
                         onClick={() => handleDelete(content.id, content.title)}
                       >
-                        🗑
+                        Hapus
                       </button>
                     </div>
                   </td>
@@ -386,6 +425,85 @@ export default function AdminDashboardPage() {
           isOpen={!!shareTarget}
           onClose={() => setShareTarget(null)}
         />
+      )}
+
+      {/* Progress Modal */}
+      {showProgressModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: 'var(--bg-surface, #1F1813)',
+            padding: '2.5rem',
+            borderRadius: '16px',
+            width: '90%',
+            maxWidth: '500px',
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <h2 style={{ marginBottom: '1rem', fontSize: '1.75rem', fontWeight: 700, color: '#fff' }}>
+              {injectProgress === 100 ? 'Selesai!' : 'Menginjeksi Data...'}
+            </h2>
+            <p style={{ color: 'var(--text-secondary, #9CA3AF)', marginBottom: '2rem', fontSize: '0.95rem' }}>
+              Mohon tunggu, kami sedang memproses data film dan series Anda.
+              Proses ini mungkin memakan waktu beberapa saat.
+            </p>
+
+            {/* Progress Bar Container */}
+            <div style={{
+              width: '100%',
+              height: '32px',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '20px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              {/* Progress Bar Fill */}
+              <div style={{
+                height: '100%',
+                width: `${injectProgress}%`,
+                background: 'linear-gradient(90deg, var(--gold, #E85D04) 0%, #fff 100%)',
+                borderRadius: '20px',
+                transition: 'width 0.3s ease-out',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                paddingRight: '12px',
+                minWidth: '40px'
+              }}>
+                <span style={{
+                  color: '#000',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  textShadow: '0 1px 2px rgba(255,255,255,0.5)'
+                }}>
+                  {injectProgress}%
+                </span>
+              </div>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '1rem',
+              fontSize: '0.85rem',
+              color: 'var(--text-secondary, #9CA3AF)'
+            }}>
+              <span>Diproses: {injectStats.processed} / {injectStats.total}</span>
+              <span>Berhasil: <span style={{ color: '#4ade80' }}>{injectStats.success}</span> | Dilewati: <span style={{ color: '#fbbf24' }}>{injectStats.skipped}</span></span>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
