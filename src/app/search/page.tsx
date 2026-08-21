@@ -30,13 +30,18 @@ export default async function SearchPage({ searchParams }: Props) {
   let contents: any[] = [];
   
   if (q.trim()) {
-    const { data } = await supabase
-      .from("contents")
-      .select("*, genres(*)")
-      .ilike("title", `%${q}%`)
-      .order("created_at", { ascending: false });
-      
-    contents = data || [];
+    const safeQuery = q.trim().replace(/[^a-zA-Z0-9]/g, '');
+    
+    if (safeQuery.length >= 2) {
+      const searchPattern = safeQuery.split('').join('[-\\s:]?');
+      const { data } = await supabase
+        .from("contents")
+        .select("*, genres(*)")
+        .filter("title", "imatch", searchPattern)
+        .order("created_at", { ascending: false });
+        
+      contents = data || [];
+    }
   }
 
   return (

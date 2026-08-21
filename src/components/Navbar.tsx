@@ -27,12 +27,23 @@ export default function Navbar() {
       if (searchQuery.trim().length > 1) {
         setIsSearching(true);
         setShowSuggestions(true);
+
+        const safeQuery = searchQuery.trim().replace(/[^a-zA-Z0-9]/g, '');
+
+        if (safeQuery.length < 2) {
+          setSuggestions([]);
+          setIsSearching(false);
+          return;
+        }
+
+        const searchPattern = safeQuery.split('').join('[-\\s:]?');
+
         const { data } = await supabase
           .from("contents")
           .select("id, title, slug, type, year")
-          .ilike("title", `%${searchQuery.trim()}%`)
+          .filter("title", "imatch", searchPattern)
           .limit(5);
-        
+
         setSuggestions(data || []);
         setIsSearching(false);
       } else {
@@ -116,17 +127,17 @@ export default function Navbar() {
 
             {/* Suggestions Dropdown */}
             {showSuggestions && (
-              <div 
-                style={{ 
-                  position: 'absolute', 
-                  top: '100%', 
-                  left: 0, 
-                  right: '44px', // account for button width
-                  marginTop: '8px', 
-                  background: '#1F1813', 
-                  border: '1px solid var(--line-strong)', 
-                  borderRadius: '8px', 
-                  zIndex: 100, 
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: '44px',
+                  marginTop: '8px',
+                  background: '#1F1813',
+                  border: '1px solid var(--line-strong)',
+                  borderRadius: '8px',
+                  zIndex: 100,
                   overflow: 'hidden',
                   boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
                 }}
@@ -138,15 +149,15 @@ export default function Navbar() {
                 ) : suggestions.length > 0 ? (
                   <>
                     {suggestions.map(s => (
-                      <Link 
-                        key={s.id} 
+                      <Link
+                        key={s.id}
                         href={`/nonton/${s.slug}`}
                         onClick={() => setShowSuggestions(false)}
-                        style={{ 
-                          display: 'block', 
-                          padding: '10px 12px', 
-                          textDecoration: 'none', 
-                          color: 'var(--text)', 
+                        style={{
+                          display: 'block',
+                          padding: '10px 12px',
+                          textDecoration: 'none',
+                          color: 'var(--text)',
                           borderBottom: '1px solid rgba(255,255,255,0.05)',
                           transition: 'background 0.2s'
                         }}
@@ -161,16 +172,16 @@ export default function Navbar() {
                         </div>
                       </Link>
                     ))}
-                    <Link 
+                    <Link
                       href={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
                       onClick={() => setShowSuggestions(false)}
-                      style={{ 
-                        display: 'block', 
-                        padding: '10px', 
-                        textAlign: 'center', 
-                        fontSize: '12px', 
-                        color: 'var(--gold)', 
-                        fontWeight: 700, 
+                      style={{
+                        display: 'block',
+                        padding: '10px',
+                        textAlign: 'center',
+                        fontSize: '12px',
+                        color: 'var(--gold)',
+                        fontWeight: 700,
                         background: 'rgba(232, 93, 4, 0.05)',
                         textDecoration: 'none'
                       }}
