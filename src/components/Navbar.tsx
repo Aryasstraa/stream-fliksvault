@@ -18,6 +18,7 @@ export default function Navbar() {
     { label: "Beranda", href: "/" },
     { label: "Film", href: "/film" },
     { label: "Anime", href: "/anime" },
+    { label: "Animasi", href: "/animasi" },
     { label: "Drama Korea", href: "/drakor" },
     { label: "Drama China", href: "/drachin" },
   ];
