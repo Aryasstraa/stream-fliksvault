@@ -35,7 +35,7 @@ export default function EpisodeGrid({
     // 1. Picu Popunder Adsterra HANYA dari sini (tombol nonton)
     triggerPopunder();
 
-    // 2. Redirect tab saat ini ke URL video eksternal setelah delay singkat
+    // 2. Buka URL video eksternal di tab baru setelah delay singkat
     setTimeout(() => {
       let url = episode.external_url;
       if (!url || url.trim() === "" || url === "N/A" || !url.includes(".")) {
@@ -45,7 +45,8 @@ export default function EpisodeGrid({
       if (!url.startsWith("http://") && !url.startsWith("https://")) {
         url = "https://" + url;
       }
-      window.location.href = url;
+      // Membuka di tab baru agar tab website utama tetap ada
+      window.open(url, "_blank");
     }, 200);
   };
 
