@@ -121,8 +121,8 @@ export default function EditKontenPage() {
       if (error) throw error;
       setGenresList(prev => prev.filter(g => g.id !== id));
       setForm(p => ({
-         ...p,
-         selectedGenres: p.selectedGenres.filter(gId => gId !== id)
+        ...p,
+        selectedGenres: p.selectedGenres.filter(gId => gId !== id)
       }));
     } catch (err: any) {
       console.error(err);
@@ -208,11 +208,11 @@ export default function EditKontenPage() {
         </div>
         <nav>
           <ul className="sidebar-nav">
-            <li><Link href="/admin/dashboard" id="nav-list">📋 Daftar Konten</Link></li>
-            <li><Link href="/admin/dashboard/tambah" id="nav-add">➕ Tambah Konten</Link></li>
-            <li><Link href="/admin/dashboard/pengaturan" id="nav-settings">⚙️ Pengaturan</Link></li>
-            <li><Link href="/" id="nav-site">🌐 Lihat Website</Link></li>
-            <li><Link href="/admin" id="nav-logout">🚪 Logout</Link></li>
+            <li><Link href="/admin/dashboard" id="nav-list">Daftar Konten</Link></li>
+            <li><Link href="/admin/dashboard/tambah" id="nav-add">Tambah Konten</Link></li>
+            <li><Link href="/admin/dashboard/pengaturan" id="nav-settings">Pengaturan</Link></li>
+            <li><Link href="/" id="nav-site">Lihat Website</Link></li>
+            <li><Link href="/admin" id="nav-logout">Logout</Link></li>
           </ul>
         </nav>
       </aside>
@@ -550,7 +550,7 @@ export default function EditKontenPage() {
               disabled={loading || !initialId}
               style={{ padding: "0.8rem 2rem" }}
             >
-              {loading ? "⏳ Menyimpan..." : "💾 Simpan Perubahan"}
+              {loading ? "Menyimpan..." : "Simpan Perubahan"}
             </button>
             <Link href="/admin/dashboard" className="btn btn-ghost">
               Batal

@@ -16,7 +16,7 @@ export default function PengaturanPage() {
       if (data) {
         const popunder = data.find((s: any) => s.key === "popunder_script_url");
         if (popunder) setPopunderUrl(popunder.value);
-        
+
         const nativeBanner = data.find((s: any) => s.key === "native_banner_url");
         if (nativeBanner) setNativeBannerUrl(nativeBanner.value);
       }
@@ -41,7 +41,7 @@ export default function PengaturanPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key: "native_banner_url", value: nativeBannerUrl }),
       });
-      
+
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -60,11 +60,11 @@ export default function PengaturanPage() {
         </div>
         <nav>
           <ul className="sidebar-nav">
-            <li><Link href="/admin/dashboard" id="nav-list">📋 Daftar Konten</Link></li>
-            <li><Link href="/admin/dashboard/tambah" id="nav-add">➕ Tambah Konten</Link></li>
-            <li><Link href="/admin/dashboard/pengaturan" id="nav-settings" className="active">⚙️ Pengaturan</Link></li>
-            <li><Link href="/" id="nav-site">🌐 Lihat Website</Link></li>
-            <li><Link href="/admin" id="nav-logout">🚪 Logout</Link></li>
+            <li><Link href="/admin/dashboard" id="nav-list">Daftar Konten</Link></li>
+            <li><Link href="/admin/dashboard/tambah" id="nav-add">Tambah Konten</Link></li>
+            <li><Link href="/admin/dashboard/pengaturan" id="nav-settings" className="active">Pengaturan</Link></li>
+            <li><Link href="/" id="nav-site">Lihat Website</Link></li>
+            <li><Link href="/admin" id="nav-logout">Logout</Link></li>
           </ul>
         </nav>
       </aside>
@@ -72,13 +72,13 @@ export default function PengaturanPage() {
       {/* Main */}
       <main className="admin-main">
         <div className="admin-header">
-          <h1 className="admin-page-title">⚙️ Pengaturan Global</h1>
+          <h1 className="admin-page-title">Pengaturan Iklan</h1>
         </div>
 
         {/* Popunder Settings */}
         <form onSubmit={handleSave}>
           <div className="settings-card">
-            <div className="settings-card-title">🎯 Konfigurasi Popunder Iklan</div>
+            <div className="settings-card-title">Konfigurasi Popunder Iklan</div>
             <div className="settings-card-desc">
               Masukkan script HTML mentah iklan Popunder dari penyedia jaringan iklan Anda (contoh: Adsterra, Propeller Ads, dll).
             </div>
@@ -140,7 +140,7 @@ export default function PengaturanPage() {
               className="btn btn-admin"
               disabled={saving}
             >
-              {saving ? "⏳ Menyimpan..." : "💾 Simpan Pengaturan"}
+              {saving ? "Menyimpan..." : "Simpan Pengaturan"}
             </button>
           </div>
         </form>
@@ -156,9 +156,12 @@ export default function PengaturanPage() {
             }}
           >
             <p>
-              Script yang Anda masukkan akan langsung disisipkan ke dalam kode HTML website menggunakan fungsi khusus yang mengeksekusi JavaScript. Ini sangat cocok untuk iklan <strong>Adsterra, Monetag, PropellerAds</strong>, dan jaringan lain yang mengharuskan pemasangan raw script.
+              Script yang Anda masukkan akan langsung disisipkan ke dalam kode HTML website. Ini sangat cocok untuk iklan <strong>Adsterra, Monetag, PropellerAds</strong>, dan jaringan lain yang mengharuskan pemasangan raw script.
             </p>
-            <p style={{ marginTop: "1rem" }}>
+            <p style={{ marginTop: "0.8rem", color: "var(--gold)" }}>
+              🎯 <strong>Smart Trigger:</strong> Sistem kami telah dirancang secara khusus untuk memblokir iklan Popunder agar <strong>TIDAK</strong> muncul saat pengunjung asal klik di halaman. Iklan Popunder <strong>HANYA</strong> akan ter-trigger saat pengunjung secara spesifik menekan tombol <strong>Nonton / Pilih Episode</strong>!
+            </p>
+            <p style={{ marginTop: "0.8rem" }}>
               💡 <strong style={{ color: "var(--text-primary)" }}>Perhatian:</strong> Pastikan Anda menyalin kode script dengan utuh dan tidak terpotong agar iklan dapat berjalan dengan baik.
             </p>
           </div>

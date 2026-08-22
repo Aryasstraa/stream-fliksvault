@@ -9,7 +9,7 @@ import Swal from "sweetalert2";
 
 export default function TambahKontenPage() {
   const router = useRouter();
-  const [genresList, setGenresList] = useState<{id: string, name: string}[]>([]);
+  const [genresList, setGenresList] = useState<{ id: string, name: string }[]>([]);
 
   useEffect(() => {
     async function loadGenres() {
@@ -55,16 +55,16 @@ export default function TambahKontenPage() {
     if (!newGenreText.trim()) return;
     setAddingGenre(true);
     const customSlug = makeSlug(newGenreText);
-    
+
     try {
       const { data, error } = await supabase
         .from("genres")
         .insert({ name: newGenreText.trim(), slug: customSlug })
         .select()
         .single();
-        
+
       if (error) throw error;
-      
+
       if (data) {
         setGenresList(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
         // Otomatis pilih genre yang baru ditambahkan
@@ -85,8 +85,8 @@ export default function TambahKontenPage() {
       if (error) throw error;
       setGenresList(prev => prev.filter(g => g.id !== id));
       setForm(p => ({
-         ...p,
-         selectedGenres: p.selectedGenres.filter(gId => gId !== id)
+        ...p,
+        selectedGenres: p.selectedGenres.filter(gId => gId !== id)
       }));
     } catch (err: any) {
       console.error(err);
@@ -115,7 +115,7 @@ export default function TambahKontenPage() {
         })
         .select()
         .single();
-        
+
       if (contentError || !content) throw contentError;
 
       // === STEP 2: Simpan episodes ke Supabase ===
@@ -125,14 +125,14 @@ export default function TambahKontenPage() {
           : form.episodeUrl ? [form.episodeUrl] : [];
 
       if (episodeUrls.length > 0) {
-        const episodes = episodeUrls.map((url, i) => ({ 
-          content_id: content.id, 
-          episode_number: i+1, 
-          external_url: url 
+        const episodes = episodeUrls.map((url, i) => ({
+          content_id: content.id,
+          episode_number: i + 1,
+          external_url: url
         }));
         await supabase.from("episodes").insert(episodes);
       }
-      
+
       // === STEP 3: Simpan relasi genre ===
       if (form.selectedGenres.length > 0) {
         const contentGenres = form.selectedGenres.map(gId => ({
@@ -181,11 +181,11 @@ export default function TambahKontenPage() {
         </div>
         <nav>
           <ul className="sidebar-nav">
-            <li><Link href="/admin/dashboard" id="nav-list">📋 Daftar Konten</Link></li>
-            <li><Link href="/admin/dashboard/tambah" id="nav-add" className="active">➕ Tambah Konten</Link></li>
-            <li><Link href="/admin/dashboard/pengaturan" id="nav-settings">⚙️ Pengaturan</Link></li>
-            <li><Link href="/" id="nav-site">🌐 Lihat Website</Link></li>
-            <li><Link href="/admin" id="nav-logout">🚪 Logout</Link></li>
+            <li><Link href="/admin/dashboard" id="nav-list">Daftar Konten</Link></li>
+            <li><Link href="/admin/dashboard/tambah" id="nav-add" className="active">Tambah Konten</Link></li>
+            <li><Link href="/admin/dashboard/pengaturan" id="nav-settings">Pengaturan</Link></li>
+            <li><Link href="/" id="nav-site">Lihat Website</Link></li>
+            <li><Link href="/admin" id="nav-logout">Logout</Link></li>
           </ul>
         </nav>
       </aside>
@@ -193,7 +193,7 @@ export default function TambahKontenPage() {
       {/* Form */}
       <main className="admin-main">
         <div className="admin-header">
-          <h1 className="admin-page-title">➕ Tambah Konten Baru</h1>
+          <h1 className="admin-page-title">Tambah Konten Baru</h1>
           <Link href="/admin/dashboard" className="btn btn-ghost btn-sm">
             ← Kembali
           </Link>
@@ -247,8 +247,8 @@ export default function TambahKontenPage() {
                       }))
                     }
                   >
-                    <option value="film">🎥 Film</option>
-                    <option value="series">📺 Series / Anime</option>
+                    <option value="film">Film</option>
+                    <option value="series">Series / Anime</option>
                   </select>
                 </div>
 
@@ -387,7 +387,7 @@ export default function TambahKontenPage() {
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Input Custom Genre */}
                 <div style={{ marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px dashed var(--border)", display: "flex", gap: "0.5rem" }}>
                   <input
@@ -522,7 +522,7 @@ export default function TambahKontenPage() {
               disabled={loading}
               style={{ padding: "0.8rem 2rem" }}
             >
-              {loading ? "⏳ Menyimpan..." : "💾 Simpan Konten"}
+              {loading ? "Menyimpan..." : "Simpan Konten"}
             </button>
             <Link href="/admin/dashboard" className="btn btn-ghost">
               Batal
